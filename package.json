@@ -11,6 +11,7 @@
   "dependencies": {
     "@hookform/resolvers": "^4.1.0",
     "@zenstackhq/tanstack-query": "^2.11.6",
+    "clsx": "^2.1.1",
     "cookies-next": "^5.1.0",
     "easy-peasy": "^6.0.5",
     "lucide-react": "^0.475.0",

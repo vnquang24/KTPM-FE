@@ -1,3 +1,4 @@
+// Xử lí cookies 
 import { setCookie, getCookie, deleteCookie } from 'cookies-next';
 
 export const authenticate = (email: string, password: string) => {

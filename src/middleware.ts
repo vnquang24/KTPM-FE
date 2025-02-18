@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
+    // Kiểm tra nếu đang ở trang chủ
+  if (request.nextUrl.pathname === '/') {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
   // Lấy token từ cookies hoặc localStorage
   const isAuthenticated = request.cookies.get('auth')
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
