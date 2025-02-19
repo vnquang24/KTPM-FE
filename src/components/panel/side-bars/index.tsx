@@ -11,7 +11,7 @@ const Sidebar: React.FC = () => {
   const setIsShowSidebar = useStoreActions(actions => actions.appState.setIsShowSidebar);
   
   return (
-    <div className={`${isShowSidebar ? 'w-16' : 'w-64'} min-h-screen bg-white p-4 transition-all duration-300 relative`}>
+    <div className={`${isShowSidebar ? 'w-16' : 'w-64'} min-h-screen bg-white p-4 transition-all duration-300 relative `}>
       {/* Logo và tên app */}
     <Link 
       href="/home" 

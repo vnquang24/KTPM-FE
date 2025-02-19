@@ -13,24 +13,12 @@ import {
     {
       icon: Home, 
       label: 'Tổng hợp trường thông tin',
-      pathname: '/info-summary',
+      pathname: '/user-manage',
       subMenu: [
         { 
           label: 'Thông tin người dùng', 
-          pathname: '/map',
+          pathname: '/user-manage',
           icon: Users,
-          subMenu: [
-            {
-              label: 'Danh sách người dùng',
-              pathname: '/user-list',
-              icon: Activity
-            },
-            {
-              label: 'Thống kê người dùng',
-              pathname: '/user-stats',
-              icon: FileText
-            }
-          ]
         },
         { 
           label: 'Thông tin sân tập', 
