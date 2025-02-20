@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronUp, ChevronDown } from 'lucide-react';
@@ -27,7 +28,7 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({ item, depth }) => {
         <Link 
         href={item.pathname}
         className={clsx(
-          "flex items-center gap-23",
+          "flex items-center gap-3 text-sm",
           isShowSidebar ? "justify-center" : "w-48",
           "overflow-hidden"
         )}
@@ -45,7 +46,7 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({ item, depth }) => {
             onClick={() => setIsOpen(!isOpen)}
             className="text-gray-500 hover:text-gray-600 flex-shrink-0"
           >
-            {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
         )}
       </div>
@@ -57,7 +58,6 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({ item, depth }) => {
               key={subItem.label}
               item={subItem}
               depth={depth + 1}
-              isShowSidebar={isShowSidebar}
             />
           ))}
         </ul>

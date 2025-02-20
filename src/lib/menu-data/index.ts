@@ -12,8 +12,13 @@ import {
   export const menuItems: MenuItem[] = [
     {
       icon: Home, 
-      label: 'Tổng hợp trường thông tin',
-      pathname: '/user-manage',
+      label: 'Thống kê và lịch biểu đặt sân',
+      pathname: '/time-table',
+    },
+    {
+      icon: Settings,
+      label: 'Quản lý thông tin',
+      pathname: '/playground-management',
       subMenu: [
         { 
           label: 'Thông tin người dùng', 
@@ -31,11 +36,6 @@ import {
           icon: Users
         },
       ],
-    },
-    {
-      icon: Settings,
-      label: 'Quản lý sân tập',
-      pathname: '/playground-management',
     },
     {
         icon : Users,

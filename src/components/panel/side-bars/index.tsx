@@ -32,7 +32,7 @@ const Sidebar: React.FC = () => {
             key={item.label}
             item={item}
             depth={0}
-            isShowSidebar={isShowSidebar}
+            // isShowSidebar={isShowSidebar}
           />
         ))}
       </ul>
