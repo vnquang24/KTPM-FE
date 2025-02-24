@@ -83,5 +83,5 @@ src/
    ```
 5. Push to branch (`git push origin feature/AmazingFeature`)
 
-> ⚠️ **Cảnh báo:** Luôn luôn `git pull` trước khi code. Xử lý cẩn thận conflict```
+> ⚠️ **Cảnh báo:** Luôn luôn `git pull` trước khi code. Xử lý cẩn thận ```conflict```
 
