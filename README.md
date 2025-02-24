@@ -85,3 +85,4 @@ src/
 
 > ⚠️ **Cảnh báo:** Luôn luôn `git pull` trước khi code. Xử lý cẩn thận ```conflict```
 
+> Khi cần ```merge``` vào ```main``` thì sẽ trao đổi
