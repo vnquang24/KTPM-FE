@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pickelball Court Management Frontend
 
-## Getting Started
+Dự án frontend cho hệ thống quản lý sân Pickelball, được xây dựng bằng Next.js 15.
 
-First, run the development server:
+## Cài đặt
+
+Đầu tiên, cài đặt các dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Phát triển
+```bash
+npm run dev
+```
+Mở http://localhost:3000 trên trình duyệt để xem kết quả.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Cấu trúc thư mục
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/               # Routes và layout
+├── components/        # Các components có thể tái sử dụng
+│   ├── ui/           # UI components (buttons, inputs, etc.)
+│   └── providers/    # Context providers  
+├── lib/              # Utilities và configurations
+│   └── redux/        # Redux store setup
+└── utils/            # Helper functions
+```
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+| Công nghệ | Mô tả |
+|-----------|--------|
+| Next.js 15 | Framework |
+| Tailwind CSS | Styling |
+| Redux/Easy-peasy | State Management |
+| React Hook Form + Zod | Form Handling |
+| React Big Calendar | Calendar |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Chạy development server |
+| `npm run build` | Build production |
+| `npm run start` | Chạy production server |
+| `npm run lint` | Kiểm tra lỗi với ESLint |
 
-## Deploy on Vercel
+## Tính năng
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Đăng nhập/Đăng ký
+- Quản lý đặt sân
+- Xem lịch sử đặt sân
+- Quản lý profile người dùng
+- Xem thống kê
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Contributing
+
+1. Clone project (`git clone https://github.com/vnquang24/KTPM-FE-ADMIN-MANAGER.git`)
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Add local repo (`git add .`)
+4. Commit changes theo format:
+   ```bash
+   git commit -m "[type]: message"
+   ```
+   Trong đó:
+   - `type`: Loại thay đổi
+     - `create`: Tạo mới tính năng/file
+     - `add`: Thêm code/tính năng vào file có sẵn
+     - `update`: Cập nhật tính năng
+     - `fix`: Sửa lỗi
+     - `refactor`: Tối ưu code
+     - `remove`: Xóa code/tính năng
+   - `message`: Mô tả ngắn gọn về thay đổi (tiếng Anh hoặc Việt)
+
+   Ví dụ:
+   ```bash
+   git commit -m "[create]: Add login page"
+   git commit -m "[fix]: Sửa lỗi validate form đăng ký"
+   git commit -m "[update]: Thêm loading state cho button"
+   ```
+5. Push to branch (`git push origin feature/AmazingFeature`)
+
+> ⚠️ **Cảnh báo:** Luôn luôn `git pull` trước khi code. Xử lý cẩn thận conflict```
+
