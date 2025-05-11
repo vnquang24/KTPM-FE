@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import StoreProviderWrapper from '@/components/ui/store-provider';
+import Providers from "@/components/providers";
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -27,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en"> 
       <body className={`${inter.variable} ${roboto.variable} font-sans antialiased`}>
+      <Providers>
          <StoreProviderWrapper>
           {children}
         </StoreProviderWrapper>
+        </Providers>
       </body>
     </html>
   );

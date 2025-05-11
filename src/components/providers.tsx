@@ -1,0 +1,35 @@
+// src/components/providers.tsx
+"use client";
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Provider as ZenStackHooksProvider } from '../../generated/hooks';
+import StoreProviderWrapper from './ui/store-provider';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { FetchFn } from '@zenstackhq/tanstack-query/runtime-v5';
+
+// Tạo query client với cấu hình tối ưu
+const queryClient = new QueryClient();
+
+const fetchInstance: FetchFn = (url, options) => {
+  return fetch(url, options)
+}
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  const apiEndpoint = 'http://localhost:8000/api/models';
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ZenStackHooksProvider
+        value={{
+          endpoint: apiEndpoint,
+          fetch: fetchInstance,
+        }}
+      >
+        <StoreProviderWrapper>
+          {children}
+        </StoreProviderWrapper>
+        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+      </ZenStackHooksProvider>
+    </QueryClientProvider>
+  );
+}

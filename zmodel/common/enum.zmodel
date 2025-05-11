@@ -1,0 +1,21 @@
+enum Role {
+    ADMIN
+    CUSTOMER
+    OWNER
+} 
+enum SubFieldStatus {
+    AVAILABLE
+    MAINTENANCE
+    CLOSED
+    RESERVED
+}
+
+enum DayOfWeek {
+    MONDAY
+    TUESDAY
+    WEDNESDAY
+    THURSDAY
+    FRIDAY
+    SATURDAY
+    SUNDAY
+}

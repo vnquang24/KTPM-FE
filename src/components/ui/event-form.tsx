@@ -1,249 +1,207 @@
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import moment from 'moment'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "./form"
-
-export interface Event {
-  title: string
-  start: Date
-  end: Date
-  description?: string
-  location?: string
-}
+import { useState, useEffect } from "react";
+import moment from "moment";
+import { Button } from "./button";
+import { Input } from "./input";
+import { Textarea } from "./textarea";
 
 export interface EventFormValues {
   title: string;
-  description?: string;
-  location: string;
   start: Date;
   end: Date;
+  description?: string;
+  location?: string;
+  trainerName?: string;
+  customerId?: number;
 }
 
-export const eventFormSchema = z.object({
-  title: z.string().min(1, "Vui lòng nhập tên sự kiện"),
-  description: z.string().optional(),
-  location: z.string().min(1, "Vui lòng chọn sân"),
-  startDate: z.string(),
-  startTime: z.string(),
-  endDate: z.string(),
-  endTime: z.string(),
-}).refine((data) => {
-  const start = moment(`${data.startDate} ${data.startTime}`);
-  const end = moment(`${data.endDate} ${data.endTime}`);
-  return end.isAfter(start);
-}, {
-  message: "Thời gian kết thúc phải sau thời gian bắt đầu",
-  path: ["endTime"],
-});
-
-type FormValues = z.infer<typeof eventFormSchema>;
+export interface Event extends EventFormValues {
+  id?: number;
+  isMaintenanceEvent?: boolean;
+  customerId?: number;
+}
 
 interface EventFormProps {
-  event?: Event | null;
-  initialSlot?: { start: Date; end: Date } | null;
+  event: Event | null;
+  initialSlot: { start: Date; end: Date } | null;
   onSubmit: (values: EventFormValues) => void;
   onCancel: () => void;
+  isTrainingSession?: boolean;
 }
 
-export function EventForm({ event, initialSlot, onSubmit, onCancel }: EventFormProps) {
-  const defaultStart = event?.start || initialSlot?.start || new Date();
-  const defaultEnd = event?.end || initialSlot?.end || new Date();
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(eventFormSchema),
-    defaultValues: {
-      title: event?.title || "",
-      description: event?.description || "",
-      location: event?.location || "",
-      startDate: moment(defaultStart).format('YYYY-MM-DD'),
-      startTime: moment(defaultStart).format('HH:mm'),
-      endDate: moment(defaultEnd).format('YYYY-MM-DD'),
-      endTime: moment(defaultEnd).format('HH:mm'),
-    },
+export default function EventForm({
+  event, 
+  initialSlot,
+  onSubmit,
+  onCancel,
+  isTrainingSession = false
+}: EventFormProps) {
+  const [formValues, setFormValues] = useState<EventFormValues>({
+    title: "",
+    start: new Date(),
+    end: new Date(Date.now() + 60 * 60 * 1000), 
+    description: "",
+    location: "",
+    trainerName: "",
+    customerId: undefined
   });
 
-  const handleSubmit = (values: FormValues) => {
-    // Use strict parsing with explicit format
-    const startDateTime = moment(`${values.startDate} ${values.startTime}`, 'YYYY-MM-DD HH:mm', true);
-    const endDateTime = moment(`${values.endDate} ${values.endTime}`, 'YYYY-MM-DD HH:mm', true);
-    
-    console.log('Form values:', values);
-    console.log('Start time (local):', startDateTime.format('YYYY-MM-DD HH:mm'));
-    console.log('End time (local):', endDateTime.format('YYYY-MM-DD HH:mm'));
-  
-    // Convert form values to EventFormValues with proper Date objects
-    const eventValues: EventFormValues = {
-      title: values.title,
-      description: values.description,
-      location: values.location,
-      start: startDateTime.toDate(),
-      end: endDateTime.toDate(),
-    };
-    
-    onSubmit(eventValues);
+  useEffect(() => {
+    if (event) {
+      setFormValues({
+        title: event.title || "",
+        start: event.start || new Date(),
+        end: event.end || new Date(Date.now() + 60 * 60 * 1000),
+        description: event.description || "",
+        location: event.location || "",
+        trainerName: event.trainerName || "",
+        customerId: event.customerId
+      });
+    } else if (initialSlot) {
+      setFormValues(prevValues => ({
+        ...prevValues,
+        start: initialSlot.start,
+        end: initialSlot.end
+      }));
+    }
+  }, [event, initialSlot]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormValues({
+      ...formValues,
+      [name]: value
+    });
   };
 
+  const handleDateTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormValues({
+      ...formValues,
+      [name]: new Date(value)
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formValues);
+  };
+
+  const formatDateTimeForInput = (date: Date | string): string => {
+    return moment(date).format("YYYY-MM-DDTHH:mm");
+  };
+
+  const gymLocations = [
+    "Phòng tập chính",
+    "Phòng yoga",
+    "Phòng cardio",
+    "Bể bơi",
+    "Khu vực chung"
+  ];
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="title" className="block mb-1 font-medium text-sm">
+          Tiêu đề
+        </label>
+        <Input
+          id="title"
           name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tên sự kiện</FormLabel>
-              <FormControl>
-                <input 
-                  {...field} 
-                  className="w-full p-2 border rounded"
-                  placeholder="Nhập tên sự kiện"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          value={formValues.title}
+          onChange={handleChange}
+          required
+          placeholder={isTrainingSession ? "Ví dụ: Tập Cardio, Yoga..." : "Tiêu đề sự kiện"}
         />
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="startDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ngày bắt đầu</FormLabel>
-                <FormControl>
-                  <input 
-                    type="date" 
-                    {...field}
-                    className="w-full p-2 border rounded" 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="startTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Giờ bắt đầu</FormLabel>
-                <FormControl>
-                  <input 
-                    type="time" 
-                    {...field}
-                    className="w-full p-2 border rounded" 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="endDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ngày kết thúc</FormLabel>
-                <FormControl>
-                  <input 
-                    type="date" 
-                    {...field}
-                    className="w-full p-2 border rounded" 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="endTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Giờ kết thúc</FormLabel>
-                <FormControl>
-                  <input 
-                    type="time" 
-                    {...field}
-                    className="w-full p-2 border rounded" 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="start" className="block mb-1 font-medium text-sm">
+            Thời gian bắt đầu
+          </label>
+          <Input
+            type="datetime-local"
+            id="start"
+            name="start"
+            value={formatDateTimeForInput(formValues.start)}
+            onChange={handleDateTimeChange}
+            required
           />
         </div>
+        <div>
+          <label htmlFor="end" className="block mb-1 font-medium text-sm">
+            Thời gian kết thúc
+          </label>
+          <Input
+            type="datetime-local"
+            id="end"
+            name="end"
+            value={formatDateTimeForInput(formValues.end)}
+            onChange={handleDateTimeChange}
+            required
+          />
+        </div>
+      </div>
 
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sân</FormLabel>
-              <FormControl>
-                <select 
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  {...field}
-                >
-                  <option value="">Chọn sân</option>
-                  <option value="Sân số 1">Sân số 1</option>
-                  <option value="Sân số 2">Sân số 2</option>
-                  <option value="Sân số 3">Sân số 3</option>
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      {isTrainingSession && (
+        <div>
+          <label htmlFor="location" className="block mb-1 font-medium text-sm">
+            Địa điểm
+          </label>
+          <select
+            id="location"
+            name="location"
+            value={formValues.location}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">-- Chọn địa điểm --</option>
+            {gymLocations.map(loc => (
+              <option key={loc} value={loc}>
+                {loc}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
-        <FormField
-          control={form.control}
+      {isTrainingSession && (
+        <div>
+          <label htmlFor="trainerName" className="block mb-1 font-medium text-sm">
+            Huấn luyện viên
+          </label>
+          <Input
+            id="trainerName"
+            name="trainerName"
+            value={formValues.trainerName}
+            onChange={handleChange}
+            placeholder="Tên huấn luyện viên"
+          />
+        </div>
+      )}
+
+      <div>
+        <label htmlFor="description" className="block mb-1 font-medium text-sm">
+          Mô tả
+        </label>
+        <Textarea
+          id="description"
           name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mô tả</FormLabel>
-              <FormControl>
-                <textarea 
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="Nhập mô tả..."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          value={formValues.description}
+          onChange={handleChange}
+          placeholder={isTrainingSession ? "Mô tả chi tiết về buổi tập..." : "Mô tả sự kiện..."}
+          className="min-h-24"
         />
+      </div>
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
-          >
-            Hủy
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
-          >
-            {event ? "Cập nhật" : "Tạo mới"}
-          </button>
-        </div>
-      </form>
-    </Form>
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Hủy
+        </Button>
+        <Button type="submit">
+          {event ? "Cập nhật" : "Thêm mới"}
+        </Button>
+      </div>
+    </form>
   );
 }
-export default EventForm;

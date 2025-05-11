@@ -1,0 +1,99 @@
+import 'common/base'
+import 'common/enum'
+
+model Account extends Base {
+  username    String    @unique
+  password    String
+  phone       String?   @unique
+  email       String?   @unique
+  dateOfBirth DateTime?
+  role        Role      @default(CUSTOMER)
+  
+  owner       Owner?
+  customUser  CustomUser?
+}
+
+model CustomUser extends Base {
+  accountId   String    @unique
+  account     Account   @relation(fields: [accountId], references: [id])
+  bookings    Booking[]
+}
+
+model Owner extends Base {
+  ranking     String?
+  
+  accountId   String    @unique
+  account     Account   @relation(fields: [accountId], references: [id])
+  fields      Field[]
+}
+
+model Field extends Base {
+  ranking           String?
+  location          String
+  fieldDescription  String?
+  
+  ownerId           String
+  owner             Owner             @relation(fields: [ownerId], references: [id])
+  subFields         SubField[]
+  openingHours      OpeningHours[]    
+}
+
+model SubField extends Base {
+  ranking              String?
+  price                Float
+  status               SubFieldStatus  @default(AVAILABLE)  
+  haveToPayFirst       Boolean
+  subfieldDescription  String?
+  unitOfTime           String
+  
+  fieldId              String
+  field                Field                @relation(fields: [fieldId], references: [id])
+  bookings             Booking[]
+  maintenanceSchedules MaintenanceSchedule[]
+}
+model Booking extends Base {
+  date           DateTime
+  beginTime      DateTime
+  endTime        DateTime
+  price          Float
+  payDate        DateTime?
+  paymentMethod  String?
+  status         String     // 'pending', 'paid', 'cancel'
+  
+  customUserId   String
+  customUser     CustomUser    @relation(fields: [customUserId], references: [id])
+  subfieldId     String
+  subfield       SubField   @relation(fields: [subfieldId], references: [id])
+  review         Review?
+}
+
+model Review extends Base {
+  date        DateTime  @default(now())
+  rating      Int       // 1-5 sao
+  text        String?
+  
+  bookingId   String    @unique
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+} 
+
+model OpeningHours extends Base {
+  dayOfWeek      DayOfWeek
+  openTime       String        // Format: "HH:MM"
+  closeTime      String        // Format: "HH:MM"
+  isOpen         Boolean       @default(true)
+  
+  fieldId        String
+  field          Field         @relation(fields: [fieldId], references: [id])
+
+  @@unique([fieldId, dayOfWeek])
+}
+
+model MaintenanceSchedule extends Base {
+  startDate      DateTime
+  endDate        DateTime
+  reason         String?
+  status         String        // "scheduled", "in-progress", "completed", "cancelled"
+  
+  subfieldId     String
+  subfield       SubField      @relation(fields: [subfieldId], references: [id])
+}

@@ -6,15 +6,16 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { authenticate, setAuthenticated, isAuthenticated } from '@/utils/auth';
+import { authenticate, setAuthenticated, isAuthenticated, setUserData, getUserData } from '@/utils/auth';
+import { useState } from 'react';
 
 // Định nghĩa schema Zod cho form login
 const loginFormSchema = z.object({
-  email: z.string().email({
-    message: 'Email không hợp lệ',
+  username: z.string().min(1, {
+    message: 'Tên đăng nhập không được để trống',
   }),
-  password: z.string({
-    message: 'Mật khẩu không hợp lệ',
+  password: z.string().min(1, {
+    message: 'Mật khẩu không được để trống',
   }),
 });
 
@@ -22,11 +23,33 @@ type LoginFormType = z.infer<typeof loginFormSchema>;
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  
   useEffect(() => {
     if (isAuthenticated()) {
-      router.push('/home');
+      // Chuyển hướng dựa vào role của người dùng
+      const userData = getUserData();
+      if (userData && userData.role) {
+        switch (userData.role) {
+          case 'ADMIN':
+            router.push('/admin/statistics');
+            break;
+          case 'OWNER':
+            router.push('/owner/court-stats');
+            break;
+          case 'CUSTOMER':
+            router.push('/customer/booking');
+            break;
+          default:
+            router.push('/login');
+        }
+      } else {
+        router.push('/login');
+      }
     }
   }, [router]);
+  
   const isDev = process.env.NODE_ENV === 'development';
 
   // Sử dụng React Hook Form với Zod Resolver
@@ -39,21 +62,53 @@ const LoginPage: React.FC = () => {
     resolver: zodResolver(loginFormSchema),
   });
 
-  // Nếu đang ở môi trường dev, tự động điền email và password
+  // Nếu đang ở môi trường dev, tự động điền username và password
   React.useEffect(() => {
     if (isDev) {
-      setValue('email', 'admin@gmail.com');
+      setValue('username', 'admin');
       setValue('password', '1');
     }
   }, [isDev, setValue]);
 
   const onSubmit = async (data: LoginFormType) => {
-    if (authenticate(data.email, data.password)) {
-      setAuthenticated();
-      router.push('/home');
-      router.refresh(); // Refresh để đảm bảo middleware được chạy lại
-    } else {
-      alert('Sai email hoặc mật khẩu');
+    try {
+      setIsLoading(true);
+      setLoginError('');
+      
+      const success = await authenticate(data.username, data.password);
+      
+      if (success) {
+        // Lấy thông tin người dùng sau khi đăng nhập thành công
+        const userData = getUserData();
+        
+        // Chuyển hướng dựa vào role của người dùng
+        if (userData && userData.role) {
+          switch (userData.role) {
+            case 'ADMIN':
+              router.push('/admin/statistics');
+              break;
+            case 'OWNER':
+              router.push('/owner/court-stats');
+              break;
+            case 'CUSTOMER':
+              router.push('/customer/booking');
+              break;
+            default:
+              setLoginError('Tài khoản không có quyền truy cập');
+              return;
+          }
+          router.refresh(); // Refresh để đảm bảo middleware được chạy lại
+        } else {
+          setLoginError('Không lấy được thông tin người dùng');
+        }
+      } else {
+        setLoginError('Sai tên đăng nhập hoặc mật khẩu');
+      }
+    } catch (error) {
+      console.error('Lỗi đăng nhập:', error);
+      setLoginError('Có lỗi xảy ra khi đăng nhập');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,20 +119,20 @@ const LoginPage: React.FC = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Email input */}
+          {/* Username input */}
           <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Tên đăng nhập
             </label>
             <input
-              type="email"
-              id="email"
-              {...register('email')}
+              type="text"
+              id="username"
+              {...register('username')}
               className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              placeholder="Nhập email"
+              placeholder="Nhập tên đăng nhập"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
             )}
           </div>
 
@@ -98,12 +153,18 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
+          {/* Hiển thị lỗi đăng nhập */}
+          {loginError && (
+            <p className="text-red-500 text-sm mb-4">{loginError}</p>
+          )}
+
           {/* Submit button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded-lg mt-4 hover:bg-blue-700 focus:outline-none"
+            disabled={isLoading}
+            className={`w-full ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white p-2 rounded-lg mt-4 focus:outline-none`}
           >
-            Đăng nhập
+            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
       </div>

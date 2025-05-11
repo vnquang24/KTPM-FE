@@ -13,7 +13,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-200">
-      <h1 className="text-3xl font-bold">Trang Chính</h1>
+      <h1 className="text-3xl font-bold">Trang Chính CUSTOMER</h1>
       <button
         onClick={handleLogout}
         className="bg-red-600 text-white p-2 mt-4 rounded-lg hover:bg-red-700"
