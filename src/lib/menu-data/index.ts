@@ -21,19 +21,9 @@ import { MenuItem } from '@/components/panel/menu-item/type';
 // Menu dành cho khách hàng (customer)
 export const customerMenuItems: MenuItem[] = [
   {
-    icon: Home,
-    label: 'Trang chủ',
-    pathname: '/customer/home',
-  },
-  {
-    icon: Search,
-    label: 'Tìm kiếm sân',
-    pathname: '/customer/court-search',
-  },
-  {
-    icon: Calendar,
-    label: 'Đặt sân',
-    pathname: '/customer/booking',
+    icon: User,
+    label: 'Tài khoản',
+    pathname: '/customer/profile',
   },
   {
     icon: History,
@@ -44,11 +34,6 @@ export const customerMenuItems: MenuItem[] = [
     icon: Star,
     label: 'Đánh giá sân',
     pathname: '/customer/rating',
-  },
-  {
-    icon: User,
-    label: 'Thông tin cá nhân',
-    pathname: '/customer/profile',
   },
 ];
 
@@ -74,6 +59,11 @@ export const ownerMenuItems: MenuItem[] = [
     label: 'Quản lý đặt sân',
     pathname: '/owner/booking-management',
   },
+  {
+    icon: Star,
+    label: 'Theo dõi đánh giá sân',
+    pathname: '/owner/reviews',
+  }
 ];
 
 // Menu dành cho quản trị viên (admin)

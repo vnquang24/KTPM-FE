@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-    // Kiểm tra nếu đang ở trang chủ
+  // Kiểm tra nếu đang ở trang chủ, chuyển hướng đến /home thay vì /login
   if (request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/home', request.url))
   }
 
   // Lấy token xác thực từ cookies
   const isAuthenticated = request.cookies.get('auth')
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
+  const isHomePage = request.nextUrl.pathname === '/home'
+  
+  // Kiểm tra các đường dẫn thuộc nhóm (home) - lưu ý là (home) không xuất hiện trong URL thực tế
+  const isHomeGroupPath = request.nextUrl.pathname.startsWith('/field-details/') || 
+                          request.nextUrl.pathname.startsWith('/booking/')
 
   // Lấy thông tin người dùng từ cookies (nếu có)
   const userDataCookie = request.cookies.get('userData')
@@ -23,6 +28,11 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Cho phép các trang trong nhóm home được truy cập mà không cần xác thực
+  if (isHomePage || isHomeGroupPath) {
+    return NextResponse.next()
+  }
+
   // Nếu đã đăng nhập và cố truy cập trang login
   if (isAuthenticated && isAuthPage) {
     // Chuyển hướng dựa vào role
@@ -33,9 +43,9 @@ export function middleware(request: NextRequest) {
         case 'OWNER':
           return NextResponse.redirect(new URL('/owner/court-stats', request.url))
         case 'CUSTOMER':
-          return NextResponse.redirect(new URL('/customer/booking', request.url))
+          return NextResponse.redirect(new URL('/customer/booking-history', request.url))
         default:
-          return NextResponse.redirect(new URL('/login', request.url))
+          return NextResponse.redirect(new URL('/home', request.url))
       }
     } else {
       // Nếu không có thông tin role, chuyển về trang home mặc định
@@ -43,9 +53,9 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Nếu chưa đăng nhập và cố truy cập trang được bảo vệ
-  if (!isAuthenticated && !isAuthPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // Nếu chưa đăng nhập và cố truy cập trang được bảo vệ (không phải home, homeGroup hoặc login)
+  if (!isAuthenticated && !isAuthPage && !isHomePage && !isHomeGroupPath) {
+    return NextResponse.redirect(new URL('/home', request.url))
   }
 
   // Xử lý quyền truy cập dựa vào role
@@ -59,7 +69,7 @@ export function middleware(request: NextRequest) {
         case 'CUSTOMER':
           return NextResponse.redirect(new URL('/customer/home', request.url))
         default:
-          return NextResponse.redirect(new URL('/login', request.url))
+          return NextResponse.redirect(new URL('/home', request.url))
       }
     }
 
@@ -70,7 +80,7 @@ export function middleware(request: NextRequest) {
       if (userData.role === 'CUSTOMER') {
         return NextResponse.redirect(new URL('/customer/home', request.url))
       } else {
-        return NextResponse.redirect(new URL('/login', request.url))
+        return NextResponse.redirect(new URL('/home', request.url))
       }
     }
 
@@ -81,7 +91,7 @@ export function middleware(request: NextRequest) {
       if (userData.role === 'OWNER') {
         return NextResponse.redirect(new URL('/owner/home', request.url))
       } else {
-        return NextResponse.redirect(new URL('/login', request.url))
+        return NextResponse.redirect(new URL('/home', request.url))
       }
     }
   }

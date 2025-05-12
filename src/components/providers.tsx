@@ -6,6 +6,7 @@ import { Provider as ZenStackHooksProvider } from '../../generated/hooks';
 import StoreProviderWrapper from './ui/store-provider';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { FetchFn } from '@zenstackhq/tanstack-query/runtime-v5';
+import { ToastContextProvider } from './ui/toast';
 
 // Tạo query client với cấu hình tối ưu
 const queryClient = new QueryClient();
@@ -25,10 +26,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           fetch: fetchInstance,
         }}
       >
-        <StoreProviderWrapper>
-          {children}
-        </StoreProviderWrapper>
-        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+        <ToastContextProvider>
+          <StoreProviderWrapper>
+            {children}
+          </StoreProviderWrapper>
+          {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+        </ToastContextProvider>
       </ZenStackHooksProvider>
     </QueryClientProvider>
   );

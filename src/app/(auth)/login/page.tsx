@@ -39,7 +39,7 @@ const LoginPage: React.FC = () => {
             router.push('/owner/court-stats');
             break;
           case 'CUSTOMER':
-            router.push('/customer/booking');
+            router.push('/customer/booking-history');
             break;
           default:
             router.push('/login');
@@ -91,7 +91,7 @@ const LoginPage: React.FC = () => {
               router.push('/owner/court-stats');
               break;
             case 'CUSTOMER':
-              router.push('/customer/booking');
+              router.push('/customer/booking-history');
               break;
             default:
               setLoginError('Tài khoản không có quyền truy cập');

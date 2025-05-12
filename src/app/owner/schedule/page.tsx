@@ -559,7 +559,6 @@ const ScheduleManagementPage: React.FC = () => {
     <div className="container mx-auto py-4">
       <div className="flex flex-col space-y-5">
         <div>
-          <h1 className="text-2xl font-bold">Quản Lý Lịch Hoạt Động</h1>
           <p className="text-gray-500 mt-1">
             Quản lý giờ mở cửa và lịch bảo trì cho các sân
           </p>
