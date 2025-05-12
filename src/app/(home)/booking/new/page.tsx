@@ -9,6 +9,7 @@ import { vi } from "date-fns/locale";
 import { useFindUniqueSubField, useCreateBooking, useCreateCustomUser, useUpdateSubField, useFindFirstAccount, useFindUniqueCustomUser } from "@/generated/hooks";
 import { getUserId, isAuthenticated, getUserData } from "@/utils/auth";
 import axios from "axios";
+import image6 from "../../../../../public/6.jpg"
 
 type PaymentMethod = "BANKING" | "CASH" | "MOMO" | "ZALOPAY";
 const saltRounds = 10;
@@ -666,7 +667,7 @@ Ghi chú: ${note ? note.trim() : "Không có"}
             <div className="mb-6">
               <div className="relative h-48 rounded-lg overflow-hidden mb-4">
                 <Image
-                  src={"https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2000&auto=format&fit=crop"}
+                  src={image6}
                   alt={subfield.field.description || "Sân PickleBall"}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"

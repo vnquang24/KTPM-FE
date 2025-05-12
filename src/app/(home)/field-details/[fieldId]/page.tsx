@@ -13,6 +13,7 @@ import {
   useFindManyReview,
   useFindManyBooking 
 } from "@/generated/hooks";
+import image6 from "../../../../../public/6.jpg"
 
 const FieldDetailsPage = () => {
   const params = useParams();
@@ -370,7 +371,7 @@ const FieldDetailsPage = () => {
       <div className="mb-8">
         <div className="relative h-80 rounded-xl overflow-hidden mb-4">
           <Image
-            src={"https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2000&auto=format&fit=crop"}
+            src={image6}
             alt={field.description || "PickleBall Court"}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"

@@ -1,29 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useFindManyField, useFindManySubField, useFindManyBooking } from "@/generated/hooks";
-import { format, parse, isAfter, isBefore, addDays } from "date-fns";
-import { vi } from "date-fns/locale";
-import {SubFieldStatus} from "@prisma/client"
-// Component ảnh thay thế khi không thể sử dụng URL bên ngoài
-const ImagePlaceholder = ({ 
-  className, 
-  alt,
-  bgColor = "bg-gray-200" 
-}: { 
-  className?: string; 
-  alt: string;
-  bgColor?: string;
-}) => {
-  return (
-    <div className={`relative w-full h-full ${bgColor} flex items-center justify-center ${className}`}>
-      <span className="text-gray-400">{alt}</span>
-    </div>
-  );
-};
-
+import { useFindManyField, useFindManySubField, useFindManyBooking, useFindManyReview } from "@/generated/hooks";
+import { format } from "date-fns";
+import image2 from "../../../../public/2.jpg"
+import image5 from "../../../../public/5.jpg"
+import image3 from "../../../../public/3.webp"
+import image6 from "../../../../public/6.jpg"
 // Module Tìm kiếm sân
 const CourtSearchModule = () => {
   const [location, setLocation] = useState("");
@@ -52,7 +37,7 @@ const CourtSearchModule = () => {
       bookings: {
         where: {
           status: {
-            not: "CANCELED" // Không lấy các booking đã hủy
+            not: "cancel" // Không lấy các booking đã hủy
           }
         }
       }
@@ -63,7 +48,7 @@ const CourtSearchModule = () => {
   const { data: bookings, isLoading: isLoadingBookings } = useFindManyBooking({
     where: {
       status: {
-        not: "CANCELED" // Chỉ lấy các booking chưa bị hủy
+        not: "cancel" // Chỉ lấy các booking chưa bị hủy
       }
     },
     include: {
@@ -96,10 +81,10 @@ const CourtSearchModule = () => {
       setIsSearching(false);
       return;
     }
-    
+
     // Định dạng ngày tìm kiếm
     const searchDate = new Date(date);
-    
+
     // Log dữ liệu tìm kiếm
     console.log('Thông tin tìm kiếm:', {
       location,
@@ -115,14 +100,14 @@ const CourtSearchModule = () => {
 
       const filteredSubFields = subFields.filter(subField => {
         console.log('Đang kiểm tra sân:', subField.id, subField.subfieldDescription);
-        
+
         // Lọc theo địa điểm
         if (location) {
           const field = fields?.find(f => f.id === subField.fieldId);
-          console.log('Kiểm tra địa điểm:', { 
-            yêuCầu: location, 
-            sânChính: field?.location, 
-            khớp: field?.location === location 
+          console.log('Kiểm tra địa điểm:', {
+            yêuCầu: location,
+            sânChính: field?.location,
+            khớp: field?.location === location
           });
           if (!field || field.location !== location) {
             console.log('Loại: Không đúng địa điểm');
@@ -133,11 +118,11 @@ const CourtSearchModule = () => {
         // Lọc theo phạm vi giá
         if (priceRange) {
           const [minPrice, maxPrice] = priceRange.split('-').map(Number);
-          console.log('Kiểm tra giá:', { 
-            giáSân: subField.price, 
-            khoảngGiá: priceRange, 
-            giáThấpNhất: minPrice, 
-            giáCaoNhất: maxPrice 
+          console.log('Kiểm tra giá:', {
+            giáSân: subField.price,
+            khoảngGiá: priceRange,
+            giáThấpNhất: minPrice,
+            giáCaoNhất: maxPrice
           });
           if (maxPrice) {
             if (subField.price < minPrice || subField.price > maxPrice) {
@@ -152,7 +137,7 @@ const CourtSearchModule = () => {
             }
           }
         }
-        
+
         return true;
       });
 
@@ -206,8 +191,8 @@ const CourtSearchModule = () => {
           </select>
         </div>
         <div className="md:col-span-3 mt-2">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
             disabled={isSearching || isLoadingFields || isLoadingSubFields || isLoadingBookings}
           >
@@ -267,91 +252,145 @@ const CourtSearchModule = () => {
 
 // Module Thông tin chi tiết sân
 const CourtInfoModule = () => {
-  const courts = [
-    {
-      id: 1,
-      name: "Sân PickleBall Quận 1",
-      image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2000&auto=format&fit=crop",
-      address: "123 Nguyễn Huệ, Quận 1, TP. HCM",
-      price: "150.000đ - 250.000đ/giờ",
-      rating: 4.8,
-      description: "Sân PickleBall tiêu chuẩn quốc tế, có mái che, hệ thống đèn chiếu sáng hiện đại.",
-      amenities: ["Phòng thay đồ", "WiFi miễn phí", "Chỗ đậu xe", "Nước uống miễn phí"],
+  // Sử dụng hook để lấy danh sách field 
+  const { data: fields, isLoading: isLoadingFields } = useFindManyField({
+    include: {
+      subFields: {
+        include: {
+          bookings: {
+            include: {
+              review: true
+            }
+          }
+        }
+      }
     },
-    {
-      id: 2,
-      name: "Sân PickleBall Bình Thạnh",
-      image: "https://images.unsplash.com/photo-1564226803039-3e218882a3e1?q=80&w=2000&auto=format&fit=crop",
-      address: "456 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP. HCM",
-      price: "130.000đ - 220.000đ/giờ",
-      rating: 4.5,
-      description: "Sân PickleBall rộng rãi, mặt sân chất lượng cao, phù hợp cho cả người mới bắt đầu.",
-      amenities: ["Có huấn luyện viên", "Cho thuê dụng cụ", "Nước uống", "Bãi đậu xe"],
-    },
-    {
-      id: 3,
-      name: "Sân PickleBall Quận 7",
-      image: "https://images.unsplash.com/photo-1598121876563-29e8e3f895ef?q=80&w=2000&auto=format&fit=crop",
-      address: "789 Nguyễn Văn Linh, Quận 7, TP. HCM",
-      price: "170.000đ - 280.000đ/giờ",
-      rating: 4.9,
-      description: "Khu phức hợp thể thao cao cấp với nhiều sân PickleBall đạt tiêu chuẩn thi đấu.",
-      amenities: ["Phòng gym", "Hồ bơi", "Nhà hàng", "Cửa hàng thể thao"],
-    },
-  ];
+    take: 3,
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+
+  // Xử lý dữ liệu để tính rating trung bình
+  const topRatedFields = fields?.map(field => {
+    // Thu thập tất cả các đánh giá từ các booking của subfields
+    const allReviews = field.subFields?.flatMap(subField =>
+      subField.bookings?.filter(booking => booking.review !== null)
+        .map(booking => booking.review) || []
+    ) || [];
+
+    // Tính rating trung bình từ tất cả reviews nếu có
+    const averageRating = allReviews.length > 0
+      ? allReviews.reduce((sum, review) => sum + (review?.rating || 0), 0) / allReviews.length
+      : 0;
+
+    // Tính giá trung bình từ subFields
+    const priceRange = field.subFields && field.subFields.length > 0
+      ? {
+        min: Math.min(...field.subFields.map(sub => sub.price)),
+        max: Math.max(...field.subFields.map(sub => sub.price))
+      }
+      : { min: 0, max: 0 };
+
+    // Các tiện ích (mặc định)
+    const amenities = ["Phòng thay đồ", "WiFi miễn phí", "Chỗ đậu xe", "Nước uống miễn phí"];
+
+    return {
+      id: field.id,
+      fieldName: field.fieldDescription || field.location,
+      location: field.location,
+      description: field.fieldDescription,
+      rating: averageRating.toFixed(1),
+      priceRange: `${priceRange.min.toLocaleString()}đ - ${priceRange.max.toLocaleString()}đ/giờ`,
+      amenities,
+      image: image6
+    };
+  }) || [];
+
+  // Sắp xếp theo rating giảm dần
+  topRatedFields.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
 
   return (
     <div className="w-full max-w-7xl mx-auto">
       <h2 className="text-3xl font-bold text-center mb-8">Sân PickleBall nổi bật</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {courts.map((court) => (
-          <div key={court.id} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-            <div className="relative h-48">
-              <Image 
-                src={court.image}
-                alt={court.name}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover"
-                priority={court.id === 1}
-              />
+        {isLoadingFields ? (
+          // Hiển thị skeleton loader khi đang tải
+          Array(3).fill(0).map((_, idx) => (
+            <div key={idx} className="bg-white rounded-xl overflow-hidden shadow-md animate-pulse">
+              <div className="h-48 bg-gray-200"></div>
+              <div className="p-5">
+                <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
+                <div className="h-16 bg-gray-200 rounded mb-4"></div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-6 w-20 bg-gray-200 rounded-full"></div>
+                  ))}
+                </div>
+                <div className="h-10 bg-gray-200 rounded"></div>
+              </div>
             </div>
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xl font-bold text-gray-800">{court.name}</h3>
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                  </svg>
-                  <span className="ml-1 text-gray-600 font-medium">{court.rating}</span>
+          ))
+        ) : topRatedFields.length > 0 ? (
+          topRatedFields.map((field) => (
+            <div key={field.id} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+              <div className="relative h-48">
+                <Image
+                  src={field.image}
+                  alt={field.fieldName}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover"
+                  priority={field.id === topRatedFields[0]?.id}
+                />
+              </div>
+              <div className="p-5">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xl font-bold text-gray-800">{field.fieldName}</h3>
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                    <span className="ml-1 text-gray-600 font-medium">{field.rating}</span>
+                  </div>
+                </div>
+                <p className="text-gray-600 mb-2">{field.location}</p>
+                <p className="text-blue-600 font-semibold mb-3">{field.priceRange}</p>
+                <p className="text-gray-700 mb-4 line-clamp-2">{field.description || "Sân PickleBall tiêu chuẩn, chất lượng cao, phù hợp cho mọi trình độ người chơi."}</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {field.amenities.map((amenity, index) => (
+                    <span key={index} className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex justify-center">
+                  <Link href={`/field-details/${field.id}`}>
+                    <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                      Xem chi tiết
+                    </Button>
+                  </Link>
                 </div>
               </div>
-              <p className="text-gray-600 mb-2">{court.address}</p>
-              <p className="text-blue-600 font-semibold mb-3">{court.price}</p>
-              <p className="text-gray-700 mb-4 line-clamp-2">{court.description}</p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {court.amenities.map((amenity, index) => (
-                  <span key={index} className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-              <div className="flex justify-center">
-                <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                  Xem chi tiết
-                </Button>
-              </div>
             </div>
+          ))
+        ) : (
+          <div className="col-span-3 text-center py-10">
+            <p className="text-gray-500">Không tìm thấy sân nào</p>
           </div>
-        ))}
+        )}
       </div>
       <div className="text-center mt-8">
-        <Button
-          variant="outline"
-          className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-        >
-          Xem thêm sân
-        </Button>
+        <Link href="/court-search">
+          <Button
+            variant="outline"
+            className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+          >
+            Xem thêm sân
+          </Button>
+        </Link>
       </div>
     </div>
   );
@@ -359,6 +398,8 @@ const CourtInfoModule = () => {
 
 // Module Đặt sân
 const BookingModule = () => {
+
+
   return (
     <div className="w-full max-w-7xl mx-auto">
       <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-xl overflow-hidden">
@@ -411,8 +452,9 @@ const BookingModule = () => {
           </div>
           <div className="hidden md:block md:w-1/2 relative">
             <div className="absolute inset-0 bg-black opacity-10 z-10"></div>
-            <Image 
-              src="https://images.unsplash.com/photo-1569863959165-306f4d93950a?q=80&w=2000&auto=format&fit=crop"
+            <Image
+              src={image3}
+
               alt="PickleBall Court"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -427,6 +469,7 @@ const BookingModule = () => {
 
 // Mục Giới thiệu về PickleBall
 const AboutSection = () => {
+
   return (
     <div className="w-full max-w-7xl mx-auto" id="about">
       <div className="md:flex items-center gap-10">
@@ -441,13 +484,18 @@ const AboutSection = () => {
           <p className="text-gray-700 text-lg mb-6">
             Tại Việt Nam, PickleBall đang ngày càng phát triển và thu hút nhiều người chơi với các sân chất lượng cao được xây dựng trên khắp các thành phố lớn.
           </p>
-          <Link href="/about" className="inline-block text-blue-600 font-medium hover:underline">
+          <Link
+            href="https://vi.wikipedia.org/wiki/Pickleball"
+            className="inline-block text-blue-600 font-medium hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Tìm hiểu thêm về PickleBall &rarr;
           </Link>
         </div>
         <div className="md:w-1/2 relative rounded-xl overflow-hidden h-80">
-          <Image 
-            src="https://images.unsplash.com/photo-1627414374133-c940bd285232?q=80&w=2000&auto=format&fit=crop"
+          <Image
+            src={image2}
             alt="PickleBall Sport"
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
@@ -468,7 +516,7 @@ export default function Home() {
           <div className="md:flex items-center justify-between">
             <div className="md:w-1/2 mb-10 md:mb-0">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                Khám phá niềm vui cùng 
+                Khám phá niềm vui cùng
                 <span className="text-blue-600"> PickleBall</span>
               </h1>
               <p className="text-gray-700 text-lg mb-8">
@@ -479,14 +527,20 @@ export default function Home() {
                   Tìm sân ngay
                 </Button>
                 <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold px-6 py-3 text-lg">
-                  Tìm hiểu thêm
+                  <Link
+                    href="https://vi.wikipedia.org/wiki/Pickleball"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Tìm hiểu thêm &rarr;
+                  </Link>
                 </Button>
               </div>
             </div>
             <div className="md:w-1/2">
               <div className="relative h-80 md:h-96 rounded-xl overflow-hidden shadow-xl">
-                <Image 
-                  src="https://images.unsplash.com/photo-1518093929702-c6f370c4e8a1?q=80&w=2000&auto=format&fit=crop"
+                <Image
+                  src={image5}
                   alt="PickleBall Court"
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -523,39 +577,120 @@ export default function Home() {
       <section className="w-full px-4 py-10 bg-gray-50">
         <div className="w-full max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-10">Khách hàng nói gì về chúng tôi</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="bg-white p-6 rounded-xl shadow-md">
-                <div className="flex items-center mb-4">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <svg key={star} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                      </svg>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-gray-700 mb-6">"Dịch vụ đặt sân rất tiện lợi, sân chất lượng tốt và nhân viên phục vụ nhiệt tình. Tôi sẽ tiếp tục sử dụng dịch vụ này trong tương lai."</p>
-                <div className="flex items-center">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
-                    <Image 
-                      src={`https://i.pravatar.cc/150?img=${item + 10}`}
-                      alt="Avatar"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-semibold">Nguyễn Văn A</p>
-                    <p className="text-gray-600 text-sm">Khách hàng thường xuyên</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TestimonialsSection />
         </div>
       </section>
 
     </div>
   );
 }
+
+// Component hiển thị đánh giá của khách hàng
+const TestimonialsSection = () => {
+  // Lấy các đánh giá từ database, sắp xếp theo thời gian tạo giảm dần và lấy 3 đánh giá mới nhất
+  const { data: reviews, isLoading } = useFindManyReview({
+    where: {
+      rating: {
+        gte: 4 // Chỉ lấy các đánh giá từ 4 sao trở lên
+      }
+    },
+    include: {
+      booking: {
+        include: {
+          customUser: {
+            include: {
+              account: true
+            }
+          },
+          subfield: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: 'desc'
+    },
+    take: 3
+  });
+
+  // Tạo placeholder để hiển thị khi đang tải dữ liệu
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[1, 2, 3].map((item) => (
+          <div key={item} className="bg-white p-6 rounded-xl shadow-md animate-pulse">
+            <div className="flex items-center mb-4">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <div key={star} className="w-5 h-5 bg-gray-200 rounded-full mr-1"></div>
+                ))}
+              </div>
+            </div>
+            <div className="h-20 bg-gray-200 rounded mb-6"></div>
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
+              <div>
+                <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 w-32 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Hiển thị tin nhắn khi không có đánh giá nào
+  if (!reviews || reviews.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500">Chưa có đánh giá nào</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {reviews.map((review) => {
+        // Kiểm tra và lấy dữ liệu một cách an toàn
+        const booking = review.booking;
+        const username = booking?.customUser?.account?.username || 'Khách hàng ẩn danh';
+        const userInitial = username.charAt(0);
+        const subfieldDesc = booking?.subfield?.subfieldDescription || 'Sân tiêu chuẩn';
+
+        return (
+          <div key={review.id} className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center mb-4">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg
+                    key={star}
+                    className={`w-5 h-5 ${star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                ))}
+              </div>
+            </div>
+            <p className="text-gray-700 mb-6 line-clamp-4">"{review.text || review.description || 'Trải nghiệm rất tốt'}"</p>
+            <div className="flex items-center">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4 bg-gray-200">
+                <div className="flex items-center justify-center h-full text-xl font-bold text-gray-500">
+                  {userInitial}
+                </div>
+              </div>
+              <div>
+                <p className="font-semibold">{username}</p>
+                <p className="text-gray-600 text-sm">
+                  {`Đã đặt sân ${subfieldDesc}`}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
