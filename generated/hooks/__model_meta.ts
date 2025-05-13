@@ -39,11 +39,9 @@ const metadata = {
                 }, phone: {
                     name: "phone",
                     type: "String",
-                    isOptional: true,
                 }, email: {
                     name: "email",
                     type: "String",
-                    isOptional: true,
                 }, dateOfBirth: {
                     name: "dateOfBirth",
                     type: "DateTime",
@@ -73,12 +71,6 @@ const metadata = {
                 }, username: {
                     name: "username",
                     fields: ["username"]
-                }, phone: {
-                    name: "phone",
-                    fields: ["phone"]
-                }, email: {
-                    name: "email",
-                    fields: ["email"]
                 },
             }
             ,
