@@ -382,16 +382,7 @@ const CourtInfoModule = () => {
           </div>
         )}
       </div>
-      <div className="text-center mt-8">
-        <Link href="/court-search">
-          <Button
-            variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-          >
-            Xem thêm sân
-          </Button>
-        </Link>
-      </div>
+      
     </div>
   );
 };

@@ -49,7 +49,6 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
   const userId = getUserId();
-  const [activeTab, setActiveTab] = useState("info");
 
   // Fetch user account data
   const { data: userData, isLoading } = useFindUniqueAccount(
@@ -151,7 +150,7 @@ export default function ProfilePage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Họ và tên</FormLabel>
+                        <FormLabel>Username</FormLabel>
                         <FormControl>
                           <Input placeholder="Nguyễn Văn A" {...field} />
                         </FormControl>

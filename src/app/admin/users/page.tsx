@@ -484,7 +484,7 @@ export default function UsersPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="new-email" className="font-medium">Email</label>
+              <label htmlFor="new-email" className="font-medium">Email <span className="text-red-500">*</span></label>
               <Input
                 id="new-email"
                 type="email"
@@ -501,7 +501,7 @@ export default function UsersPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="new-phone" className="font-medium">Số điện thoại</label>
+              <label htmlFor="new-phone" className="font-medium">Số điện thoại <span className="text-red-500">*</span></label>
               <Input
                 id="new-phone"
                 value={newUser.phone}
@@ -517,7 +517,7 @@ export default function UsersPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="new-role" className="font-medium">Vai trò</label>
+              <label htmlFor="new-role" className="font-medium">Vai trò <span className="text-red-500">*</span></label>
               <Select
                 value={newUser.role}
                 onValueChange={(value) => setNewUser({ ...newUser, role: value as Role })}

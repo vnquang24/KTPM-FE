@@ -565,7 +565,7 @@ Ghi chú: ${note ? note.trim() : "Không có"}
               <div>
                 <p className="text-gray-600 text-sm mb-1">Trạng thái thanh toán</p>
                 <p className="inline-block bg-red-100 text-red-800 py-1 px-2 rounded-full text-xs font-semibold">
-                  {bookingData.status === "PENDING_PAYMENT" ? "Chờ thanh toán" : "Chưa thanh toán"}
+                  {bookingData.status === "PENDING" ? "Chờ thanh toán" : "Chưa thanh toán"}
                 </p>
               </div>
               <div>
@@ -749,34 +749,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
             {bookingError && (
               <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">
                 <p>{bookingError}</p>
-              </div>
-            )}
-
-            {!loggedIn && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-bold text-yellow-800 mb-2">Bạn đã có tài khoản?</h3>
-                <p className="text-yellow-800 mb-4">Nếu bạn đã có tài khoản, vui lòng đăng nhập để quản lý đặt sân dễ dàng hơn và xem lịch sử đặt sân của bạn.</p>
-
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
-                  </svg>
-                  <span>Đăng nhập sẽ giúp bạn theo dõi lịch sử đặt sân và nhận được thông báo cập nhật.</span>
-                </div>
-
-                <div className="mt-4">
-                  <Link href="/login">
-                    <Button className="bg-yellow-600 hover:bg-yellow-700 text-white">
-                      Đăng nhập ngay
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {loggedIn && (
-              <div className="bg-blue-50 text-blue-700 p-4 rounded-lg mb-6">
-                <p>Bạn đang đặt sân với tài khoản hiện tại. Thông tin sẽ được lưu vào lịch sử đặt sân của bạn.</p>
               </div>
             )}
 

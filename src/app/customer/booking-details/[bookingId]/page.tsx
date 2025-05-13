@@ -216,7 +216,7 @@ export default function BookingDetailsPage() {
             <CardContent className="space-y-4">
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="space-y-1">
-                  <div className="text-lg font-semibold">{booking.subfield?.field?.description || "Không có tên"}</div>
+                  <div className="text-lg font-semibold">{booking.subfield?.field?.location || "Không có tên"}</div>
                   <div className="text-muted-foreground">{booking.subfield?.subfieldDescription}</div>
                 </div>
                 <div className="flex items-center mt-2 md:mt-0">

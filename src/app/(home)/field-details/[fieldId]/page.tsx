@@ -15,6 +15,21 @@ import {
 } from "@/generated/hooks";
 import image6 from "../../../../../public/6.jpg"
 
+// Hàm chuyển đổi tên thứ từ tiếng Anh sang tiếng Việt
+const formatDayOfWeekToVietnamese = (dayOfWeek: string): string => {
+  const dayMapping: Record<string, string> = {
+    "MONDAY": "Thứ 2",
+    "TUESDAY": "Thứ 3",
+    "WEDNESDAY": "Thứ 4",
+    "THURSDAY": "Thứ 5",
+    "FRIDAY": "Thứ 6",
+    "SATURDAY": "Thứ 7",
+    "SUNDAY": "Chủ nhật"
+  };
+  
+  return dayMapping[dayOfWeek] || dayOfWeek;
+};
+
 const FieldDetailsPage = () => {
   const params = useParams();
   const fieldId = params.fieldId as string;
@@ -333,18 +348,6 @@ const FieldDetailsPage = () => {
     });
   };
 
-  // Tiện ích của sân (tùy thuộc vào loại sân)
-  const getAmenities = (field: any) => {
-    const baseAmenities = ["Phòng thay đồ", "Nước uống miễn phí", "Wifi"];
-    
-    if (field?.ranking === "PREMIUM") {
-      return [...baseAmenities, "Nhà hàng", "Phòng tắm VIP", "Huấn luyện viên", "Cho thuê dụng cụ"];
-    } else if (field?.ranking === "STANDARD") {
-      return [...baseAmenities, "Cho thuê dụng cụ", "Bãi đậu xe"];
-    } else {
-      return baseAmenities;
-    }
-  };
 
   if (isLoadingField) {
     return (
@@ -476,23 +479,13 @@ const FieldDetailsPage = () => {
                     </div>
                   ))}
                 </div>
-
-                <h2 className="text-2xl font-bold mb-4">Tiện ích</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  {getAmenities(field).map((amenity, index) => (
-                    <div key={index} className="bg-gray-100 rounded-lg p-3 text-center">
-                      <span className="text-gray-800">{amenity}</span>
-                    </div>
-                  ))}
-                </div>
-
                 <h2 className="text-2xl font-bold mb-4">Giờ mở cửa</h2>
                 <div className="bg-gray-100 rounded-lg p-4 mb-6">
                   <div className="grid grid-cols-2 gap-4">
                     {field.openingHours && field.openingHours.length > 0 ? (
                       field.openingHours.map((oh: any) => (
                         <div key={oh.id} className="flex justify-between border-b border-gray-200 py-2 last:border-0">
-                          <span className="font-medium">{oh.dayOfWeek}:</span>
+                          <span className="font-medium">{formatDayOfWeekToVietnamese(oh.dayOfWeek)}:</span>
                           <span>{oh.openTime.substring(0, 5)} - {oh.closeTime.substring(0, 5)}</span>
                         </div>
                       ))

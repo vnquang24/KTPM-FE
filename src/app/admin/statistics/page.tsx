@@ -409,7 +409,7 @@ export default function StatisticsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="p-4">
               <CardHeader>
-                <CardTitle className="text-lg">Top 10 người dùng đặt sân nhiều nhất</CardTitle>
+                <CardTitle className="text-lg">Top 10 khách hàng đặt sân nhiều nhất</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
