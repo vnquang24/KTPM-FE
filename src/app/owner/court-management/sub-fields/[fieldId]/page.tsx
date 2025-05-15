@@ -52,6 +52,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit, Trash2, ArrowLeft, PenLine } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { SubFieldStatus } from '@prisma/client';
 
 const SubFieldManagementPage: React.FC = () => {
   const params = useParams();
@@ -64,7 +65,7 @@ const SubFieldManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newSubField, setNewSubField] = useState({
     price: 0,
-    status: 'AVAILABLE', 
+    status: 'AVAILABLE' as SubFieldStatus, 
     haveToPayFirst: true,
     subfieldDescription: '',
     ranking: '',
@@ -107,7 +108,7 @@ const SubFieldManagementPage: React.FC = () => {
       setIsAddModalOpen(false);
       setNewSubField({
         price: 0,
-        status: 'AVAILABLE',
+        status: 'AVAILABLE' as SubFieldStatus,
         haveToPayFirst: true,
         subfieldDescription: '',
         ranking: '',
@@ -249,7 +250,7 @@ const SubFieldManagementPage: React.FC = () => {
                   <Label htmlFor="status">Trạng thái</Label>
                   <Select
                     value={newSubField.status}
-                    onValueChange={(value) => setNewSubField({...newSubField, status: value})}
+                    onValueChange={(value) => setNewSubField({...newSubField, status: value as SubFieldStatus})}
                   >
                     <SelectTrigger id="status">
                       <SelectValue placeholder="Chọn trạng thái" />
@@ -397,7 +398,7 @@ const SubFieldManagementPage: React.FC = () => {
                                 <Label htmlFor="edit-status">Trạng thái</Label>
                                 <Select
                                   value={selectedSubField.status}
-                                  onValueChange={(value) => setSelectedSubField({...selectedSubField, status: value})}
+                                  onValueChange={(value) => setSelectedSubField({...selectedSubField, status: value as SubFieldStatus})}
                                 >
                                   <SelectTrigger id="edit-status">
                                     <SelectValue placeholder="Chọn trạng thái" />

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import image6 from "../../../../../public/6.jpg"
 type PaymentMethod = "BANKING" | "CASH" | "MOMO" | "ZALOPAY";
 const saltRounds = 10;
 
-const NewBookingPage = () => {
+const BookingForm = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const subfieldId = searchParams.get("subfieldId");
@@ -907,6 +907,18 @@ Ghi chú: ${note ? note.trim() : "Không có"}
         </div>
       </div>
     </div>
+  );
+};
+
+const NewBookingPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <BookingForm />
+    </Suspense>
   );
 };
 
