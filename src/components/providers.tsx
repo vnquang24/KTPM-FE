@@ -16,7 +16,8 @@ const fetchInstance: FetchFn = (url, options) => {
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const apiEndpoint = 'http://localhost:8000/api/models';
+  const apiEndpoint = 'https://bektpm-production.up.railway.app/api/models';
+
 
   return (
     <QueryClientProvider client={queryClient}>

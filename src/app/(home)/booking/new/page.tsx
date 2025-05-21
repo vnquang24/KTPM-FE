@@ -260,7 +260,7 @@ const BookingForm = () => {
 
         // Gọi API đăng ký
         const registerResponse = await axios.post(
-          'http://localhost:8000/api/auth/register',
+          'https://bektpm-production.up.railway.app/api/auth/register',
           registerData
         );
 

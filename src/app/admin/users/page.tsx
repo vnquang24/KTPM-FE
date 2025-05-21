@@ -236,7 +236,7 @@ export default function UsersPage() {
 
       // Gọi API đăng ký
       const response = await axios.post(
-        'http://localhost:8000/api/auth/register',
+        'http://bektpm-production.up.railway.app/api/auth/register',
         registerData
       );
 
