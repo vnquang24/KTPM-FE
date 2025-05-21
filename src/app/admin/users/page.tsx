@@ -4,7 +4,8 @@ import {
   useFindManyAccount,
   useUpdateAccount,
   useDeleteAccount,
-  useCreateAccount
+  useCreateCustomUser,
+  useCreateOwner
 } from '@/generated/hooks';
 import { Role } from '@prisma/client';
 import {
@@ -41,8 +42,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-hot-toast';
 import { Eye, EyeOff, Loader2, Search, UserCog, UserPlus } from 'lucide-react';
+import axios from 'axios';
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,12 +58,17 @@ export default function UsersPage() {
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
     phone: '',
     password: '',
-    role: Role.CUSTOMER as Role // Đảm bảo kiểu dữ liệu đúng
+    role: Role.CUSTOMER as Role,
+    // Thông tin bổ sung cho Customer
+    customerDescription: '',
+    // Thông tin bổ sung cho Owner
+    ownerRanking: ''
   });
 
   // Load accounts with relations (chỉ hiển thị các tài khoản chưa bị xóa mềm)
@@ -90,7 +98,7 @@ export default function UsersPage() {
       deleted: true
     }
   });
-
+ // Xóa tài khoản chỉ là update trường deleted
   const updateAccount = useUpdateAccount({
     onSuccess: () => {
       toast.success('Cập nhật người dùng thành công');
@@ -102,34 +110,32 @@ export default function UsersPage() {
     }
   });
 
-  const deleteAccount = useDeleteAccount({
-    onSuccess: () => {
-      toast.success('Xóa người dùng thành công');
-      refetch();
-    },
+  // Mutation để tạo CustomUser
+  const createCustomUser = useCreateCustomUser({
     onError: (error) => {
-      toast.error(`Lỗi: ${error.message}`);
+      toast.error(`Lỗi tạo thông tin khách hàng: ${error.message}`);
     }
   });
 
-  const createAccount = useCreateAccount({
-    onSuccess: () => {
-      toast.success('Thêm người dùng thành công');
-      refetch();
-      setIsAdding(false);
-      // Reset form
-      setNewUser({
-        username: '',
-        email: '',
-        phone: '',
-        password: '',
-        role: Role.CUSTOMER
-      });
-    },
+  // Mutation để tạo Owner
+  const createOwner = useCreateOwner({
     onError: (error) => {
-      toast.error(`Lỗi: ${error.message}`);
+      toast.error(`Lỗi tạo thông tin chủ sân: ${error.message}`);
     }
   });
+
+  // Reset form thêm người dùng mới
+  const resetNewUserForm = () => {
+    setNewUser({
+      username: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: Role.CUSTOMER,
+      customerDescription: '',
+      ownerRanking: ''
+    });
+  };
 
   const handleUpdateUser = () => {
     if (!editUser) return;
@@ -175,11 +181,9 @@ export default function UsersPage() {
       setIsCheckingEmail(false);
     }
     
-    // Kiểm tra số điện thoại nếu có
     if (newUser.phone && allAccounts) {
       setIsCheckingPhone(true);
       
-      // Tìm kiếm trong tất cả tài khoản (bao gồm cả đã bị xóa mềm)
       const existingPhone = allAccounts.find(account => 
         account.phone?.toLowerCase() === newUser.phone.toLowerCase()
       );
@@ -195,45 +199,102 @@ export default function UsersPage() {
     return isValid;
   };
 
-  const handleAddUser = () => {
-    // Kiểm tra mật khẩu bắt buộc
+  const handleAddUser = async () => {
     if (!newUser.password) {
       toast.error('Vui lòng nhập mật khẩu');
       return;
     }
 
-    // Kiểm tra tính độc nhất của email và số điện thoại
+    // Kiểm tra thông tin bổ sung cho từng vai trò
+    if (newUser.role === Role.CUSTOMER && !newUser.customerDescription) {
+      toast.error('Vui lòng nhập mô tả cho khách hàng');
+      return;
+    }
+
     const isUnique = checkUserUniqueness();
     
-    // Nếu có lỗi về email hoặc số điện thoại, dừng lại
     if (!isUnique) {
       toast.error('Vui lòng kiểm tra lại thông tin đã nhập');
       return;
     }
 
-    // Tạo tên người dùng duy nhất nếu không có hoặc sử dụng tên đã nhập
-    const baseUsername = newUser.username.trim() || 'user';
-    const uniqueUsername = generateUniqueUsername(baseUsername);
-    
-    // Tạo tài khoản mới với tên người dùng duy nhất
-    createAccount.mutate({
-      data: {
+    setIsSubmitting(true);
+
+    try {
+      const baseUsername = newUser.username.trim() || 'user';
+      const uniqueUsername = generateUniqueUsername(baseUsername);
+      
+      // Chuẩn bị dữ liệu để gửi đến API register
+      const registerData = {
         username: uniqueUsername,
         password: newUser.password,
         email: newUser.email || undefined,
         phone: newUser.phone || undefined,
         role: newUser.role,
+        dateOfBirth: new Date().toISOString().split('T')[0] // Mặc định là ngày hiện tại
+      };
+
+      // Gọi API đăng ký
+      const response = await axios.post(
+        'http://localhost:8000/api/auth/register',
+        registerData
+      );
+
+      if (!response.data || !response.data.user || !response.data.user.id) {
+        toast.error('Không thể tạo tài khoản. Vui lòng thử lại sau.');
+        setIsSubmitting(false);
+        return;
       }
-    });
+
+      const newAccountId = response.data.user.id;
+
+      // Tạo thông tin bổ sung dựa trên vai trò
+      if (newUser.role === Role.CUSTOMER) {
+        await createCustomUser.mutateAsync({
+          data: {
+            description: newUser.customerDescription || `Khách hàng được tạo bởi Admin`,
+            account: {
+              connect: { id: newAccountId }
+            }
+          }
+        });
+        toast.success('Thêm người dùng và thông tin khách hàng thành công');
+      } else if (newUser.role === Role.OWNER) {
+        await createOwner.mutateAsync({
+          data: {
+            ranking: newUser.ownerRanking || undefined,
+            account: {
+              connect: { id: newAccountId }
+            }
+          }
+        });
+        toast.success('Thêm người dùng và thông tin chủ sân thành công');
+      } else {
+        toast.success('Thêm người dùng thành công');
+      }
+
+      refetch();
+      setIsAdding(false);
+      resetNewUserForm();
+    } catch (error: any) {
+      console.error("Lỗi khi tạo người dùng:", error);
+      
+      if (error.response && error.response.data) {
+        toast.error(`Lỗi: ${error.response.data.message || 'Không thể tạo tài khoản'}`);
+      } else {
+        toast.error(`Lỗi: ${error.message || 'Không thể tạo tài khoản'}`);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
     if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
-      // Thực hiện xóa mềm bằng cách cập nhật trường deleted
       updateAccount.mutate({
         where: { id: userId },
         data: {
-          deleted: new Date(), // Đánh dấu thời điểm xóa
+          deleted: new Date(),
         }
       }, {
         onSuccess: () => {
@@ -250,12 +311,12 @@ export default function UsersPage() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case Role.ADMIN:
-        return 'bg-red-500';
+        return 'bg-red-500 text-white';
       case Role.OWNER:
-        return 'bg-blue-500';
-      case Role.CUSTOMER: // Updated from USER to CUSTOMER
+        return 'bg-blue-500 text-white';
+      case Role.CUSTOMER: 
       default:
-        return 'bg-green-500';
+        return 'bg-green-500 text-white';
     }
   };
 
@@ -296,7 +357,7 @@ export default function UsersPage() {
                 <SelectItem value="ALL" className="bg-white">Tất cả</SelectItem>
                 <SelectItem value={Role.ADMIN} className="bg-white">Quản trị viên</SelectItem>
                 <SelectItem value={Role.OWNER} className="bg-white">Chủ sân</SelectItem>
-                <SelectItem value={Role.CUSTOMER} className="bg-white">Người dùng</SelectItem>
+                <SelectItem value={Role.CUSTOMER} className="bg-white">Khách hàng</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -329,7 +390,7 @@ export default function UsersPage() {
                           <Badge className={getRoleBadgeColor(account.role)}>
                             {account.role === Role.ADMIN && 'Quản trị viên'}
                             {account.role === Role.OWNER && 'Chủ sân'}
-                            {account.role === Role.CUSTOMER && 'Người dùng'}
+                            {account.role === Role.CUSTOMER && 'Khách hàng'}
                           </Badge>
                         </TableCell>
                         <TableCell>{new Date(account.createdAt).toLocaleDateString('vi-VN')}</TableCell>
@@ -423,7 +484,7 @@ export default function UsersPage() {
                 <SelectContent>
                   <SelectItem value={Role.ADMIN}>Quản trị viên</SelectItem>
                   <SelectItem value={Role.OWNER}>Chủ sân</SelectItem>
-                  <SelectItem value={Role.CUSTOMER}>Người dùng</SelectItem>
+                  <SelectItem value={Role.CUSTOMER}>Khách hàng</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -528,19 +589,52 @@ export default function UsersPage() {
                 <SelectContent className="bg-white">
                   <SelectItem value={Role.ADMIN} className="bg-white">Quản trị viên</SelectItem>
                   <SelectItem value={Role.OWNER} className="bg-white">Chủ sân</SelectItem>
-                  <SelectItem value={Role.CUSTOMER} className="bg-white">Người dùng</SelectItem>
+                  <SelectItem value={Role.CUSTOMER} className="bg-white">Khách hàng</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Thông tin bổ sung cho Customer */}
+            {newUser.role === Role.CUSTOMER && (
+              <div className="space-y-2 pt-2 border-t border-gray-200">
+                <label htmlFor="customer-description" className="font-medium">Mô tả khách hàng <span className="text-red-500">*</span></label>
+                <Textarea
+                  id="customer-description"
+                  value={newUser.customerDescription}
+                  onChange={(e) => setNewUser({ ...newUser, customerDescription: e.target.value })}
+                  placeholder="Nhập mô tả về khách hàng"
+                  className="min-h-[80px]"
+                />
+                <p className="text-xs text-blue-500 mt-1">
+                  Thông tin này sẽ được lưu trong bảng CustomUser và liên kết với tài khoản
+                </p>
+              </div>
+            )}
+
+            {/* Thông tin bổ sung cho Owner */}
+            {newUser.role === Role.OWNER && (
+              <div className="space-y-2 pt-2 border-t border-gray-200">
+                <label htmlFor="owner-ranking" className="font-medium">Xếp hạng chủ sân</label>
+                <Input
+                  id="owner-ranking"
+                  value={newUser.ownerRanking}
+                  onChange={(e) => setNewUser({ ...newUser, ownerRanking: e.target.value })}
+                  placeholder="Nhập xếp hạng của chủ sân (nếu có)"
+                />
+                <p className="text-xs text-blue-500 mt-1">
+                  Thông tin này sẽ được lưu trong bảng Owner và liên kết với tài khoản
+                </p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAdding(false)}>Hủy</Button>
             <Button 
               onClick={handleAddUser}
-              disabled={createAccount.isPending}
+              disabled={isSubmitting}
             >
-              {createAccount.isPending ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Đang xử lý...

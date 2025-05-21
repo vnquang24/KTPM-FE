@@ -15,7 +15,25 @@ import {
 } from "@/generated/hooks";
 import image6 from "../../../../../public/6.jpg"
 
-// Hàm chuyển đổi tên thứ từ tiếng Anh sang tiếng Việt
+// Thêm component GoogleMap
+const GoogleMap = ({ address }: { address: string }) => {
+  const encodedAddress = encodeURIComponent(address);
+  
+  return (
+    <div className="w-full h-80 rounded-lg overflow-hidden">
+      <iframe
+        width="100%"
+        height="100%"
+        style={{ border: 0 }}
+        loading="lazy"
+        allowFullScreen
+        referrerPolicy="no-referrer-when-downgrade"
+        src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAFxY9VRqJUFnQqTHwBpjXpjJFTdj9qsfo&q=${encodedAddress}&language=vi`}
+      ></iframe>
+    </div>
+  );
+};
+
 const formatDayOfWeekToVietnamese = (dayOfWeek: string): string => {
   const dayMapping: Record<string, string> = {
     "MONDAY": "Thứ 2",
@@ -510,7 +528,6 @@ const FieldDetailsPage = () => {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold">Đánh giá từ người chơi</h2>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">Viết đánh giá</Button>
                 </div>
 
                 {isLoadingReviews ? (
@@ -524,7 +541,7 @@ const FieldDetailsPage = () => {
                         <div className="flex items-center mb-4">
                           <div className="relative w-10 h-10 mr-4 rounded-full overflow-hidden">
                             <Image
-                              src={`https://i.pravatar.cc/150?u=${review.bookingId}`}
+                              src={`https://api.dicebear.com/9.x/identicon/svg?seed=Chase`}
                               alt="Avatar"
                               fill
                               className="object-cover"
@@ -580,11 +597,9 @@ const FieldDetailsPage = () => {
                   <strong>Email:</strong> {field.owner?.account?.email || "Chưa cập nhật"}
                 </p>
 
-                <div className="bg-gray-200 h-80 rounded-lg flex items-center justify-center mb-6">
-                  <p className="text-gray-600">Bản đồ hiện chưa khả dụng</p>
-                </div>
+                <GoogleMap address={field.location} />
 
-                <h3 className="text-xl font-bold mb-3">Hướng dẫn đi đến</h3>
+                <h3 className="text-xl font-bold mb-3 mt-6">Hướng dẫn đi đến</h3>
                 <p className="text-gray-700 mb-2">
                   <strong>Từ trung tâm thành phố:</strong> Di chuyển khoảng 15 phút bằng xe máy.
                 </p>

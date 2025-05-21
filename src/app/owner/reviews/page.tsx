@@ -148,7 +148,7 @@ export default function ReviewsPage() {
           <SelectTrigger className="w-[280px]">
             <SelectValue placeholder="Chọn sân để lọc" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value="all">Tất cả các sân</SelectItem>
             {ownerFields?.map(field => (
               <SelectItem key={field.id} value={field.id}>

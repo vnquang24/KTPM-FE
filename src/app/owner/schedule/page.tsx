@@ -617,9 +617,9 @@ const ScheduleManagementPage: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent className="bg-white">
                         <SelectItem value="all">Tất cả sân con</SelectItem>
-                        {subFields.map((subField, index) => (
+                        {subFields.map((subField) => (
                           <SelectItem key={subField.id} value={subField.id}>
-                            Sân con {index + 1}
+                            {subField.subfieldDescription}
                           </SelectItem>
                         ))}
                       </SelectContent>

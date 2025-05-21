@@ -42,7 +42,7 @@ const SidebarContent: React.FC = () => {
   return (
     <div className={`${isShowSidebar ? 'w-16' : 'w-64'} min-h-screen bg-white p-4 transition-all duration-300 relative `}>
       <Link 
-        href={user?.role === 'CUSTOMER' ? '/customer/home' : user?.role === 'OWNER' ? '/owner/home' : '/admin/home'}
+        href={user?.role === 'CUSTOMER' ? '/customer/booking-detail' : user?.role === 'OWNER' ? '/owner/home' : '/admin/home'}
         className={`flex items-center ${
           isShowSidebar ? 'justify-center' : 'gap-3'
         } mb-4 px-2 pb-3 pt-3`}

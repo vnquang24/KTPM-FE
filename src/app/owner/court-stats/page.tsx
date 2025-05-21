@@ -46,10 +46,8 @@ const CourtStatsPage: React.FC = () => {
   const [selectedQuarter, setSelectedQuarter] = useState<string>(`${new Date().getFullYear()}-Q${Math.floor(new Date().getMonth() / 3) + 1}`);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
 
-  // Get user ID from auth
   const userId = getUserId();
-  
-  // Get owner information
+
   const { data: owner } = useFindFirstOwner({
     where: {
       account: {
@@ -57,8 +55,7 @@ const CourtStatsPage: React.FC = () => {
       }
     }
   });
-  
-  // Get all fields for this owner
+
   const { data: fields } = useFindManyField({
     where: {
       ownerId: owner?.id,
@@ -70,7 +67,6 @@ const CourtStatsPage: React.FC = () => {
     enabled: !!owner?.id,
   });
 
-  // Get all subfields for selected field or all fields
   const { data: subfields } = useFindManySubField({
     where: {
       field: {
@@ -85,10 +81,9 @@ const CourtStatsPage: React.FC = () => {
     enabled: !!owner?.id,
   });
 
-  // Get start and end dates based on selected date range
   const [startDate, endDate] = useMemo(() => {
     const today = new Date();
-    
+
     if (selectedDateRange === 'month') {
       const [year, month] = selectedMonth.split('-').map(Number);
       const start = startOfMonth(new Date(year, month - 1));
@@ -106,17 +101,14 @@ const CourtStatsPage: React.FC = () => {
       const end = endOfYear(new Date(year, 0, 1));
       return [start, end];
     } else if (selectedDateRange === 'all') {
-      // Đặt ngày bắt đầu là một ngày rất xa trong quá khứ
       const start = new Date(2000, 0, 1);
-      // Đặt ngày kết thúc là ngày hiện tại
       const end = new Date();
       return [start, end];
     }
-    
+
     return [startOfMonth(today), endOfMonth(today)];
   }, [selectedDateRange, selectedMonth, selectedQuarter, selectedYear]);
-  
-  // Get all bookings for fields owned by this owner within date range
+
   const { data: bookings } = useFindManyBooking({
     where: {
       subfield: {
@@ -149,8 +141,6 @@ const CourtStatsPage: React.FC = () => {
   }, {
     enabled: !!owner?.id && !!startDate && !!endDate,
   });
-  console.log(bookings);
-  // Get reviews for the selected time period
   const { data: reviews } = useFindManyReview({
     where: {
       booking: {
@@ -181,60 +171,18 @@ const CourtStatsPage: React.FC = () => {
     enabled: !!owner?.id && !!startDate && !!endDate,
   });
   console.log(reviews);
-  // Overview statistics
-  const overviewStats = useMemo(() => {
-    if (!bookings || !fields || !subfields) return {
-      totalBookings: 0,
-      totalRevenue: 0,
-      averageRating: 0,
-      uniqueCustomers: 0,
-      totalFields: 0,
-      totalSubfields: 0,
-      averageBookingsPerDay: 0,
-      averageRevenuePerBooking: 0
-    };
-    
-    const totalBookings = bookings.length;
-    const totalRevenue = bookings.reduce((sum, booking) => sum + booking.price, 0);
-    
-    // Calculate average rating
-    const bookingWithReviews = bookings.filter(booking => booking.review);
-    const averageRating = bookingWithReviews.length > 0 
-      ? bookingWithReviews.reduce((sum, booking) => sum + (booking.review?.rating || 0), 0) / bookingWithReviews.length
-      : 0;
-    
-    // Calculate unique customers
-    const uniqueCustomerIds = new Set(bookings.map(booking => booking.customUserId));
-    
-    // Calculate average bookings per day
-    const dayCount = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-    const averageBookingsPerDay = totalBookings / dayCount;
-    
-    return {
-      totalBookings,
-      totalRevenue,
-      averageRating,
-      uniqueCustomers: uniqueCustomerIds.size,
-      totalFields: fields.length,
-      totalSubfields: subfields.length,
-      averageBookingsPerDay,
-      averageRevenuePerBooking: totalBookings > 0 ? totalRevenue / totalBookings : 0
-    };
-  }, [bookings, fields, subfields, startDate, endDate]);
 
-  // Module 1: Bookings per court
+
   const bookingsPerCourt = useMemo(() => {
     if (!bookings || !fields) return [];
-    
+
     const bookingCounts: Record<string, { id: string, name: string, shortName: string, count: number, revenue: number }> = {};
-    
-    // Initialize counters for each field
+
     fields.forEach(field => {
-      // Tạo tên ngắn gọn cho biểu đồ
-      const shortName = field.location.length > 15 
-        ? field.location.substring(0, 15) + '...' 
+      const shortName = field.location.length > 15
+        ? field.location.substring(0, 15) + '...'
         : field.location;
-        
+
       bookingCounts[field.id] = {
         id: field.id,
         name: field.location,
@@ -243,8 +191,7 @@ const CourtStatsPage: React.FC = () => {
         revenue: 0
       };
     });
-    
-    // Count bookings per field
+
     bookings.forEach(booking => {
       const fieldId = booking.subfield?.fieldId;
       if (fieldId && bookingCounts[fieldId]) {
@@ -252,23 +199,21 @@ const CourtStatsPage: React.FC = () => {
         bookingCounts[fieldId].revenue += booking.price;
       }
     });
-    
+
     return Object.values(bookingCounts);
   }, [bookings, fields]);
 
-  // Module 2: Bookings per subfield
   const bookingsPerSubfield = useMemo(() => {
     if (!bookings || !subfields) return [];
-    
+
     const subfieldBookings: Record<string, { id: string, name: string, fieldName: string, count: number, revenue: number }> = {};
-    
+
     // Initialize counters for each subfield
     subfields.forEach(subfield => {
-      // Lấy tên sân con từ subfieldDescription nếu có, nếu không thì tạo tên mặc định
-      const subfieldName = subfield.subfieldDescription 
-        ? subfield.subfieldDescription 
+      const subfieldName = subfield.subfieldDescription
+        ? subfield.subfieldDescription
         : `Sân ${subfield.id.substring(0, 4)}`;
-        
+
       subfieldBookings[subfield.id] = {
         id: subfield.id,
         name: subfieldName,
@@ -277,7 +222,7 @@ const CourtStatsPage: React.FC = () => {
         revenue: 0
       };
     });
-    
+
     // Count bookings per subfield
     bookings.forEach(booking => {
       const subfieldId = booking.subfieldId;
@@ -286,23 +231,23 @@ const CourtStatsPage: React.FC = () => {
         subfieldBookings[subfieldId].revenue += booking.price;
       }
     });
-    
+
     return Object.values(subfieldBookings);
   }, [bookings, subfields]);
 
   // Module 3: Daily booking trends
   const dailyBookingTrends = useMemo(() => {
     if (!bookings || !startDate || !endDate) return [];
-    
+
     const dailyData: Record<string, { date: string, count: number, revenue: number }> = {};
-    
+
     // Create entry for each day in range
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     days.forEach(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
       dailyData[dateStr] = { date: format(day, 'dd/MM', { locale: vi }), count: 0, revenue: 0 };
     });
-    
+
     // Count bookings per day
     bookings.forEach(booking => {
       const dateStr = format(new Date(booking.date), 'yyyy-MM-dd');
@@ -311,19 +256,19 @@ const CourtStatsPage: React.FC = () => {
         dailyData[dateStr].revenue += booking.price;
       }
     });
-    
+
     return Object.values(dailyData);
   }, [bookings, startDate, endDate]);
 
   // Module 4: Revenue distribution by court
   const revenueDistribution = useMemo(() => {
     if (!bookings || !fields) return [];
-    
+
     const revenueData: { name: string, shortName: string, value: number, color: string }[] = [];
     const colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
-    
+
     const fieldRevenues: Record<string, number> = {};
-    
+
     // Sum revenue by field
     bookings.forEach(booking => {
       const fieldId = booking.subfield?.fieldId;
@@ -334,16 +279,16 @@ const CourtStatsPage: React.FC = () => {
         fieldRevenues[fieldId] += booking.price;
       }
     });
-    
+
     // Create pie chart data
     Object.keys(fieldRevenues).forEach((fieldId, index) => {
       const field = fields.find(f => f.id === fieldId);
       if (field) {
         // Tạo tên ngắn gọn cho biểu đồ
-        const shortName = field.location.length > 15 
-          ? field.location.substring(0, 15) + '...' 
+        const shortName = field.location.length > 15
+          ? field.location.substring(0, 15) + '...'
           : field.location;
-          
+
         revenueData.push({
           name: field.location,
           shortName: shortName,
@@ -352,24 +297,24 @@ const CourtStatsPage: React.FC = () => {
         });
       }
     });
-    
+
     return revenueData;
   }, [bookings, fields]);
 
   // Module 4b: Revenue distribution by subfield for each field
   const subFieldRevenueDistribution = useMemo(() => {
     if (!bookings || !fields) return {};
-    
-    const colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', 
-                    '#b19cd9', '#90ee90', '#ffb6c1', '#87ceeb', '#f08080', '#e6e6fa', '#d8bfd8', '#dda0dd'];
-    
+
+    const colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300',
+      '#b19cd9', '#90ee90', '#ffb6c1', '#87ceeb', '#f08080', '#e6e6fa', '#d8bfd8', '#dda0dd'];
+
     // Tạo map chứa doanh thu theo sân con, nhóm theo sân lớn
     const result: Record<string, {
       fieldName: string,
       totalRevenue: number,
       subfields: { name: string, value: number, color: string }[]
     }> = {};
-    
+
     // Khởi tạo dữ liệu các sân lớn
     fields.forEach(field => {
       result[field.id] = {
@@ -377,15 +322,13 @@ const CourtStatsPage: React.FC = () => {
         totalRevenue: 0,
         subfields: []
       };
-      
-      // Khởi tạo dữ liệu cho sân con
+
       if (field.subFields && field.subFields.length > 0) {
         field.subFields.forEach((subfield, index) => {
-          // Lấy tên sân con từ subfieldDescription nếu có
-          const subfieldName = subfield.subfieldDescription 
-            ? subfield.subfieldDescription 
+          const subfieldName = subfield.subfieldDescription
+            ? subfield.subfieldDescription
             : `Sân ${subfield.id.substring(0, 4)}`;
-            
+
           result[field.id].subfields.push({
             name: subfieldName,
             value: 0,
@@ -394,26 +337,25 @@ const CourtStatsPage: React.FC = () => {
         });
       }
     });
-    
-    // Tính toán doanh thu từ bookings
+
     bookings.forEach(booking => {
       const fieldId = booking.subfield?.fieldId;
       const subfieldId = booking.subfieldId;
-      
+
       if (fieldId && result[fieldId]) {
         // Cộng doanh thu vào tổng của sân lớn
         result[fieldId].totalRevenue += booking.price;
-        
+
         // Lấy tên sân con
-        const subfieldName = booking.subfield?.subfieldDescription 
-          ? booking.subfield.subfieldDescription 
+        const subfieldName = booking.subfield?.subfieldDescription
+          ? booking.subfield.subfieldDescription
           : `Sân ${subfieldId.substring(0, 4)}`;
-        
+
         // Tìm và cộng doanh thu vào sân con
         const subfieldIndex = result[fieldId].subfields.findIndex(
           sf => sf.name === subfieldName
         );
-        
+
         if (subfieldIndex >= 0) {
           result[fieldId].subfields[subfieldIndex].value += booking.price;
         } else {
@@ -426,7 +368,7 @@ const CourtStatsPage: React.FC = () => {
         }
       }
     });
-    
+
     // Lọc bỏ các sân không có doanh thu
     Object.keys(result).forEach(fieldId => {
       if (result[fieldId].totalRevenue === 0) {
@@ -436,7 +378,7 @@ const CourtStatsPage: React.FC = () => {
         result[fieldId].subfields = result[fieldId].subfields.filter(sf => sf.value > 0);
       }
     });
-    
+
     return result;
   }, [bookings, fields]);
 
@@ -485,7 +427,7 @@ const CourtStatsPage: React.FC = () => {
             Xem thông tin thống kê lượt đặt và doanh thu theo sân ({getDateRangeDisplay})
           </p>
         </div>
-        
+
         {/* Filter Controls */}
         <Card>
           <CardHeader className="pb-3">
@@ -499,7 +441,7 @@ const CourtStatsPage: React.FC = () => {
                   <SelectTrigger id="field-filter">
                     <SelectValue placeholder="Chọn sân" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="all">Tất cả các sân</SelectItem>
                     {fields?.map(field => (
                       <SelectItem key={field.id} value={field.id}>
@@ -509,14 +451,14 @@ const CourtStatsPage: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <Label htmlFor="date-range" className="mb-2 block">Khoảng thời gian</Label>
                 <Select value={selectedDateRange} onValueChange={setSelectedDateRange}>
                   <SelectTrigger id="date-range">
                     <SelectValue placeholder="Chọn khoảng thời gian" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="month">Theo tháng</SelectItem>
                     <SelectItem value="quarter">Theo quý</SelectItem>
                     <SelectItem value="year">Theo năm</SelectItem>
@@ -524,7 +466,7 @@ const CourtStatsPage: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {selectedDateRange === 'month' && (
                 <div>
                   <Label htmlFor="month-select" className="mb-2 block">Tháng</Label>
@@ -537,7 +479,7 @@ const CourtStatsPage: React.FC = () => {
                   />
                 </div>
               )}
-              
+
               {selectedDateRange === 'quarter' && (
                 <div>
                   <Label htmlFor="quarter-select" className="mb-2 block">Quý</Label>
@@ -550,7 +492,7 @@ const CourtStatsPage: React.FC = () => {
                   />
                 </div>
               )}
-              
+
               {selectedDateRange === 'year' && (
                 <div>
                   <Label htmlFor="year-select" className="mb-2 block">Năm</Label>
@@ -563,7 +505,7 @@ const CourtStatsPage: React.FC = () => {
                   />
                 </div>
               )}
-              
+
               {selectedDateRange === 'all' && (
                 <div>
                   <Label className="mb-2 block">Khoảng thời gian</Label>
@@ -575,7 +517,7 @@ const CourtStatsPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Module 1: Bookings per Court */}
@@ -604,7 +546,7 @@ const CourtStatsPage: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="shortName" />
                     <YAxis />
-                    <Tooltip 
+                    <Tooltip
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
@@ -625,7 +567,7 @@ const CourtStatsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Module 2: Revenue per Court */}
           <Card>
             <CardHeader>
@@ -651,16 +593,16 @@ const CourtStatsPage: React.FC = () => {
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="shortName" />
-                    <YAxis 
-                      tickFormatter={(value) => 
-                        value >= 1000000 
-                          ? `${value / 1000000}M` 
-                          : value >= 1000 
-                          ? `${value / 1000}K` 
-                          : value
+                    <YAxis
+                      tickFormatter={(value) =>
+                        value >= 1000000
+                          ? `${value / 1000000}M`
+                          : value >= 1000
+                            ? `${value / 1000}K`
+                            : value
                       }
                     />
-                    <Tooltip 
+                    <Tooltip
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
@@ -681,7 +623,7 @@ const CourtStatsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Module 3: Daily Booking Trends */}
           <Card>
             <CardHeader>
@@ -716,7 +658,7 @@ const CourtStatsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Module 3b: Daily Revenue Trends */}
           <Card>
             <CardHeader>
@@ -742,16 +684,16 @@ const CourtStatsPage: React.FC = () => {
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
-                    <YAxis 
-                      tickFormatter={(value) => 
-                        value >= 1000000 
-                          ? `${value / 1000000}M` 
-                          : value >= 1000 
-                          ? `${value / 1000}K` 
-                          : value
+                    <YAxis
+                      tickFormatter={(value) =>
+                        value >= 1000000
+                          ? `${value / 1000000}M`
+                          : value >= 1000
+                            ? `${value / 1000}K`
+                            : value
                       }
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [`${formatCurrency(value)} VNĐ`, 'Doanh thu']}
                     />
                     <Legend />
@@ -761,7 +703,7 @@ const CourtStatsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Module 4: Revenue Distribution */}
           <Card>
             <CardHeader>
@@ -792,7 +734,7 @@ const CourtStatsPage: React.FC = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
@@ -813,7 +755,7 @@ const CourtStatsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Module 4b: Revenue Distribution by SubField */}
           <Card>
             <CardHeader>
@@ -831,7 +773,7 @@ const CourtStatsPage: React.FC = () => {
                   Object.keys(subFieldRevenueDistribution).map((fieldId) => {
                     const fieldData = subFieldRevenueDistribution[fieldId];
                     if (fieldData.subfields.length === 0) return null;
-                    
+
                     return (
                       <div key={fieldId} className="space-y-2">
                         <h4 className="text-sm font-medium">{fieldData.fieldName} - {formatCurrency(fieldData.totalRevenue)} VNĐ</h4>
@@ -857,7 +799,7 @@ const CourtStatsPage: React.FC = () => {
                                   <Cell key={`cell-${index}`} fill={entry.color} />
                                 ))}
                               </Pie>
-                              <Tooltip 
+                              <Tooltip
                                 content={({ active, payload, label }) => {
                                   if (active && payload && payload.length) {
                                     const data = payload[0].payload;
@@ -889,7 +831,7 @@ const CourtStatsPage: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         {/* SubField Stats Table */}
         <Card>
           <CardHeader>
@@ -925,7 +867,7 @@ const CourtStatsPage: React.FC = () => {
                     const totalRevenue = bookings?.reduce((total, booking) => total + booking.price, 0) || 0;
                     const bookingPercentage = totalBookings > 0 ? (subfield.count / totalBookings) * 100 : 0;
                     const revenuePercentage = totalRevenue > 0 ? (subfield.revenue / totalRevenue) * 100 : 0;
-                    
+
                     return (
                       <tr key={subfield.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

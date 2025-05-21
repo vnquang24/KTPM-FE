@@ -10,7 +10,7 @@ import { useFindUniqueSubField, useCreateBooking, useCreateCustomUser, useUpdate
 import { getUserId, isAuthenticated, getUserData } from "@/utils/auth";
 import axios from "axios";
 import image6 from "../../../../../public/6.jpg"
-
+import qr from "../../../../../public/qr.jpg"
 type PaymentMethod = "BANKING" | "CASH" | "MOMO" | "ZALOPAY";
 const saltRounds = 10;
 
@@ -31,6 +31,8 @@ const BookingForm = () => {
   const [bookingError, setBookingError] = useState("");
   const [isComplete, setIsComplete] = useState(false);
   const [bookingData, setBookingData] = useState<any>(null);
+  // Thêm state để hiển thị màn hình QR
+  const [showPaymentQR, setShowPaymentQR] = useState(false);
 
   // Thêm state để lưu thông tin tài khoản mới tạo
   const [newAccountInfo, setNewAccountInfo] = useState<{
@@ -177,6 +179,12 @@ const BookingForm = () => {
 
     // Làm tròn đến 1 chữ số thập phân
     return hours.toFixed(1);
+  };
+
+  // Hàm xử lý khi người dùng hoàn tất thanh toán
+  const handleCompletePayment = () => {
+    setShowPaymentQR(false);
+    setIsComplete(true);
   };
 
   // Xử lý khi submit form
@@ -355,7 +363,14 @@ Ghi chú: ${note ? note.trim() : "Không có"}
         console.log("Cập nhật trạng thái sân thành công");
 
         setBookingData(newBooking);
-        setIsComplete(true);
+        
+        // Nếu phương thức thanh toán không phải là CASH, hiển thị màn hình QR
+        if (paymentMethod !== "CASH") {
+          setShowPaymentQR(true);
+        } else {
+          // Nếu là tiền mặt, chuyển thẳng đến màn hình hoàn tất
+          setIsComplete(true);
+        }
       } else {
         setBookingError("Không thể tạo đặt sân. Vui lòng thử lại sau.");
       }
@@ -409,6 +424,135 @@ Ghi chú: ${note ? note.trim() : "Không có"}
         <Link href="/home">
           <Button className="bg-blue-600 hover:bg-blue-700 text-white">Quay lại trang chủ</Button>
         </Link>
+      </div>
+    );
+  }
+
+  // Hiển thị màn hình QR và thông tin thanh toán
+  if (showPaymentQR && bookingData) {
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-3xl">
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+              </svg>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Thanh toán đặt sân</h1>
+            <p className="text-gray-600">Vui lòng thanh toán để hoàn tất đặt sân của bạn.</p>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-bold mb-4 pb-3 border-b border-gray-200">Thông tin đặt sân</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="text-gray-600 text-sm mb-1">Mã đặt sân</p>
+                <p className="font-semibold">{bookingData.id}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm mb-1">Ngày đặt</p>
+                <p className="font-semibold">{format(new Date(bookingData.date), 'dd/MM/yyyy')}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm mb-1">Thời gian</p>
+                <p className="font-semibold">
+                  {format(new Date(bookingData.beginTime), 'HH:mm')} - {format(new Date(bookingData.endTime), 'HH:mm')}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm mb-1">Tổng tiền</p>
+                <p className="font-bold text-blue-600">{bookingData.price.toLocaleString()}đ</p>
+              </div>
+            </div>
+
+            <h2 className="text-xl font-bold mb-4 pb-3 border-b border-gray-200">Thông tin thanh toán</h2>
+
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="flex-1">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Ngân hàng:</span>
+                    <span className="font-semibold">Vietcombank</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Số tài khoản:</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold mr-2">9333055410</span>
+                      <button
+                        className="text-blue-600 hover:text-blue-800"
+                        onClick={() => {
+                          navigator.clipboard.writeText("9333055410");
+                          alert("Đã sao chép số tài khoản!");
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Chủ tài khoản:</span>
+                    <span className="font-semibold">CÔNG TY TNHH PICKLEBALL COURT</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Số tiền:</span>
+                    <span className="font-bold text-blue-600">{bookingData.price.toLocaleString()}đ</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-600">Nội dung chuyển khoản:</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold mr-2">PBC {bookingData.id}</span>
+                      <button
+                        className="text-blue-600 hover:text-blue-800"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`PBC ${bookingData.id}`);
+                          alert("Đã sao chép nội dung chuyển khoản!");
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 flex flex-col items-center">
+                <div className="bg-white p-3 border border-gray-200 rounded-lg mb-3">
+                  <div className="w-48 h-48 relative">
+                    <Image
+                      src={qr}
+                      alt="QR Code"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 text-center mb-2">Quét mã QR để thanh toán nhanh hơn</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4">
+            <Button 
+              onClick={handleCompletePayment} 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Đã thanh toán
+            </Button>
+            <Button 
+              onClick={handleCompletePayment} 
+              variant="outline" 
+              className="flex-1"
+            >
+              Thanh toán sau
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -515,27 +659,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
 
             <h2 className="text-xl font-bold mt-6 mb-4 pb-3 border-b border-gray-200">Thông tin người đặt</h2>
             
-            {!loggedIn && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-                <h3 className="text-lg font-bold text-yellow-800 mb-2">Bạn đã có tài khoản?</h3>
-                <p className="text-yellow-800 mb-4">Nếu bạn đã có tài khoản, vui lòng đăng nhập để quản lý đặt sân dễ dàng hơn và xem lịch sử đặt sân của bạn.</p>
-
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
-                  </svg>
-                  <span>Đăng nhập sẽ giúp bạn theo dõi lịch sử đặt sân và nhận được thông báo cập nhật.</span>
-                </div>
-
-                <div className="mt-4">
-                  <Link href="/login">
-                    <Button className="bg-yellow-600 hover:bg-yellow-700 text-white">
-                      Đăng nhập ngay
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-gray-600 text-sm mb-1">Họ tên</p>
@@ -578,63 +701,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
               </div>
             </div>
           </div>
-
-          {bookingData.status === "PENDING_PAYMENT" && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-              <h3 className="text-lg font-bold text-yellow-800 mb-2">Hướng dẫn thanh toán</h3>
-              <p className="text-yellow-800 mb-4">Vui lòng thanh toán trong vòng 24 giờ để hoàn tất đặt sân.</p>
-
-              {bookingData.paymentMethod !== "CASH" && (
-                <div className="space-y-3">
-                  <p className="font-medium text-yellow-800">Thông tin thanh toán:</p>
-                  <div className="bg-white p-4 rounded-lg border border-yellow-200">
-                    <div className="flex justify-between py-2 border-b border-yellow-100">
-                      <span className="text-gray-600">Ngân hàng:</span>
-                      <span className="font-semibold">Vietcombank</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-yellow-100">
-                      <span className="text-gray-600">Số tài khoản:</span>
-                      <div className="flex items-center">
-                        <span className="font-semibold mr-2">1234567890</span>
-                        <button
-                          className="text-blue-600 hover:text-blue-800"
-                          onClick={() => {
-                            navigator.clipboard.writeText("1234567890");
-                            alert("Đã sao chép số tài khoản!");
-                          }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-yellow-100">
-                      <span className="text-gray-600">Chủ tài khoản:</span>
-                      <span className="font-semibold">CÔNG TY TNHH PICKLEBALL COURT</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-600">Nội dung chuyển khoản:</span>
-                      <div className="flex items-center">
-                        <span className="font-semibold mr-2">PBC {bookingData.id}</span>
-                        <button
-                          className="text-blue-600 hover:text-blue-800"
-                          onClick={() => {
-                            navigator.clipboard.writeText(`PBC ${bookingData.id}`);
-                            alert("Đã sao chép nội dung chuyển khoản!");
-                          }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           <div className="flex flex-col md:flex-row gap-4">
             <Link href="/home" className="flex-1">
