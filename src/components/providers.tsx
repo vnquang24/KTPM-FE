@@ -16,7 +16,7 @@ const fetchInstance: FetchFn = (url, options) => {
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const apiEndpoint = 'https://bektpm-production.up.railway.app/api/models';
+  const apiEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/models`;
 
 
   return (

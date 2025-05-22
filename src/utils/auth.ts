@@ -22,7 +22,7 @@ interface LoginData {
 
 // Tạo axios instance với các cấu hình mặc định
 const api = axios.create({
-  baseURL: 'https://bektpm-production.up.railway.app',
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json'
   }

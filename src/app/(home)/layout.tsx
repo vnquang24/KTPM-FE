@@ -13,6 +13,7 @@ export default function HomeLayout({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [username, setUsername] = useState("");
+  const [userRole, setUserRole] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const router = useRouter();
 
@@ -24,8 +25,13 @@ export default function HomeLayout({
       
       if (authStatus) {
         const userData = getUserData();
-        if (userData && userData.username) {
-          setUsername(userData.username);
+        if (userData) {
+          if (userData.username) {
+            setUsername(userData.username);
+          }
+          if (userData.role) {
+            setUserRole(userData.role);
+          }
         }
       }
     };
@@ -45,13 +51,24 @@ export default function HomeLayout({
   };
 
   const handleProfile = () => {
-    router.push("/customer/profile");
+    switch (userRole) {
+      case 'ADMIN':
+        router.push("/admin/statistics");
+        break;
+      case 'OWNER':
+        router.push("/owner/court-stats");
+        break;
+      case 'CUSTOMER':
+        router.push("/customer/booking-history");
+        break;
+    }
   };
   
   const handleLogout = () => {
     logout();
     setIsLoggedIn(false);
     setUsername("");
+    setUserRole("");
     setShowUserDropdown(false);
     router.push("/");
   };
@@ -110,7 +127,9 @@ export default function HomeLayout({
                         onClick={handleProfile}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        Tài khoản của tôi
+                        {userRole === 'ADMIN' ? 'Quản lý hệ thống' : 
+                         userRole === 'OWNER' ? 'Quản lý sân' : 
+                         'Tài khoản của tôi'}
                       </button>
                       <button 
                         onClick={handleLogout}
@@ -180,7 +199,9 @@ export default function HomeLayout({
                       variant="outline"
                       className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white w-full"
                     >
-                      Tài khoản của tôi
+                      {userRole === 'ADMIN' ? 'Quản lý hệ thống' : 
+                       userRole === 'OWNER' ? 'Quản lý sân' : 
+                       'Tài khoản của tôi'}
                     </Button>
                     <Button 
                       onClick={handleLogout}

@@ -58,16 +58,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/home', request.url))
   }
 
-  // Xử lý quyền truy cập dựa vào role
   if (isAuthenticated && userData && userData.role) {
-    // Kiểm tra truy cập vào khu vực admin
     if (request.nextUrl.pathname.startsWith('/admin') && userData.role !== 'ADMIN') {
-      // Chuyển hướng đến trang home phù hợp với role
       switch (userData.role) {
         case 'OWNER':
-          return NextResponse.redirect(new URL('/owner/home', request.url))
+          return NextResponse.redirect(new URL('/owner/booking-management', request.url))
         case 'CUSTOMER':
-          return NextResponse.redirect(new URL('/customer/home', request.url))
+          return NextResponse.redirect(new URL('/customer/booking-detail', request.url))
         default:
           return NextResponse.redirect(new URL('/home', request.url))
       }
@@ -78,7 +75,7 @@ export function middleware(request: NextRequest) {
         userData.role !== 'OWNER' && userData.role !== 'ADMIN') {
       // Chuyển hướng đến trang home phù hợp với role
       if (userData.role === 'CUSTOMER') {
-        return NextResponse.redirect(new URL('/customer/home', request.url))
+        return NextResponse.redirect(new URL('/customer/booking-detail', request.url))
       } else {
         return NextResponse.redirect(new URL('/home', request.url))
       }
@@ -87,9 +84,8 @@ export function middleware(request: NextRequest) {
     // Kiểm tra truy cập vào khu vực customer
     if (request.nextUrl.pathname.startsWith('/customer') && 
         userData.role !== 'CUSTOMER' && userData.role !== 'ADMIN') {
-      // Admin có thể truy cập tất cả, nhưng owner chỉ truy cập được khu vực owner
       if (userData.role === 'OWNER') {
-        return NextResponse.redirect(new URL('/owner/home', request.url))
+        return NextResponse.redirect(new URL('/owner/booking-management', request.url))
       } else {
         return NextResponse.redirect(new URL('/home', request.url))
       }

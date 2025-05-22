@@ -258,9 +258,8 @@ const BookingForm = () => {
 
         console.log("Gửi dữ liệu đăng ký:", registerData);
 
-        // Gọi API đăng ký
         const registerResponse = await axios.post(
-          'https://bektpm-production.up.railway.app/api/auth/register',
+          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
           registerData
         );
 
