@@ -73,7 +73,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-// Setup Calendar Localizer
 const locales = {
   'vi': vi,
 };
@@ -86,7 +85,6 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-// Calendar Event Type
 interface CalendarEvent {
   id: string;
   title: string;
@@ -98,10 +96,8 @@ interface CalendarEvent {
   bookingData?: any; // Full booking data
 }
 
-// Define booking status types
 type BookingStatus = 'PENDING' | 'APPROVED' | 'CANCELED' | 'ALL';
 
-// Mapping từ trạng thái trong database sang trạng thái hiển thị trong UI
 const mapDatabaseToUIStatus = (status: string): string => {
   const statusMap: Record<string, string> = {
     'pending': 'PENDING',
@@ -112,7 +108,6 @@ const mapDatabaseToUIStatus = (status: string): string => {
   return statusMap[status.toLowerCase()] || 'PENDING';
 };
 
-// Mapping từ trạng thái UI sang trạng thái database để lưu trữ
 const mapUIToDatabaseStatus = (status: string): string => {
   const statusMap: Record<string, string> = {
     'PENDING': 'pending',
@@ -139,14 +134,11 @@ const BookingManagementPage: React.FC = () => {
     endTime: ''
   });
   
-  // Calendar view states
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day' | 'agenda'>('week');
   const [calendarDate, setCalendarDate] = useState(new Date());
   
-  // Get user ID from auth
   const userId = getUserId();
   
-  // Get owner information
   const { data: owner } = useFindFirstOwner({
     where: {
       account: {
@@ -155,7 +147,6 @@ const BookingManagementPage: React.FC = () => {
     }
   });
   
-  // Get all fields for this owner
   const { data: fields } = useFindManyField({
     where: {
       ownerId: owner?.id,
@@ -167,7 +158,6 @@ const BookingManagementPage: React.FC = () => {
     enabled: !!owner?.id,
   });
 
-  // Get all bookings for fields owned by this owner
   const { data: bookings, refetch: refetchBookings } = useFindManyBooking({
     where: {
       subfield: {
@@ -204,10 +194,8 @@ const BookingManagementPage: React.FC = () => {
   });
   
   console.log(bookings);
-  // Booking status update mutation
   const updateBooking = useUpdateBooking();
 
-  // Handle update booking status
   const handleUpdateStatus = async (bookingId: string, newStatus: string) => {
     try {
       await updateBooking.mutateAsync({
@@ -222,12 +210,10 @@ const BookingManagementPage: React.FC = () => {
     }
   };
 
-  // Filter bookings based on search term and time range
   const filteredBookings = useMemo(() => {
     if (!bookings) return [];
     
     return bookings.filter(booking => {
-      // Lọc theo từ khóa tìm kiếm
       const customerName = booking.customUser?.account?.username?.toLowerCase() || '';
       const courtName = booking.subfield?.field?.location?.toLowerCase() || '';
       const bookingId = booking.id?.toLowerCase() || '';
@@ -237,13 +223,11 @@ const BookingManagementPage: React.FC = () => {
                            courtName.includes(searchLower) ||
                            bookingId.includes(searchLower);
       
-      // Lọc theo ngày
       let matchesDate = true;
       if (dateFilter) {
         const bookingDate = new Date(booking.date);
         const filterDate = new Date(dateFilter);
         
-        // So sánh năm, tháng, ngày (không quan tâm đến giờ, phút, giây)
         if (
           bookingDate.getFullYear() !== filterDate.getFullYear() ||
           bookingDate.getMonth() !== filterDate.getMonth() ||
@@ -253,7 +237,6 @@ const BookingManagementPage: React.FC = () => {
         }
       }
       
-      // Lọc theo khoảng thời gian
       let matchesTimeRange = true;
       if (timeRangeFilter.startTime || timeRangeFilter.endTime) {
         const bookingBeginTime = new Date(booking.beginTime);
@@ -290,7 +273,6 @@ const BookingManagementPage: React.FC = () => {
     });
   }, [bookings, searchTerm, dateFilter, timeRangeFilter]);
 
-  // Get display text for booking status
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'PENDING': return 'Chờ duyệt';
@@ -300,7 +282,6 @@ const BookingManagementPage: React.FC = () => {
     }
   };
 
-  // Get status badge color
   const getStatusBadgeColor = (status: string): string => {
     switch (status) {
       case 'PENDING': return 'bg-yellow-500 text-white hover:bg-yellow-600';
@@ -310,7 +291,6 @@ const BookingManagementPage: React.FC = () => {
     }
   };
 
-  // Available actions for each booking status
   const getAvailableActions = (booking: any): { label: string; action: string; icon?: React.ReactNode }[] => {
     const status = mapDatabaseToUIStatus(booking.status);
     switch (status) {
@@ -324,7 +304,6 @@ const BookingManagementPage: React.FC = () => {
     }
   };
 
-  // Reset all filters
   const resetFilters = () => {
     setStatusFilter('ALL');
     setSearchTerm('');
@@ -333,7 +312,6 @@ const BookingManagementPage: React.FC = () => {
     setTimeRangeFilter({ startTime: '', endTime: '' });
   };
 
-  // Convert bookings to calendar events
   const calendarEvents = useMemo<CalendarEvent[]>(() => {
     if (!filteredBookings) return [];
     
@@ -342,7 +320,6 @@ const BookingManagementPage: React.FC = () => {
       const beginTime = new Date(booking.beginTime);
       const endTime = new Date(booking.endTime);
       
-      // Create start and end date objects
       const start = new Date(
         bookingDate.getFullYear(),
         bookingDate.getMonth(),
@@ -371,7 +348,6 @@ const BookingManagementPage: React.FC = () => {
     });
   }, [filteredBookings]);
 
-  // Event styling based on status
   const eventStyleGetter = (event: CalendarEvent) => {
     let style: React.CSSProperties = {
       borderRadius: '4px',
@@ -398,7 +374,6 @@ const BookingManagementPage: React.FC = () => {
     return { style };
   };
 
-  // Custom Calendar Toolbar
   const CustomToolbar = ({ label, onView, onNavigate }: any) => (
     <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
       <div className="flex items-center gap-2">
@@ -446,7 +421,6 @@ const BookingManagementPage: React.FC = () => {
     </div>
   );
 
-  // Handle event selection
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedBooking(event.bookingData);
     setShowBookingDetail(true);
@@ -461,7 +435,6 @@ const BookingManagementPage: React.FC = () => {
           </p>
         </div>
         
-        {/* Filter Controls */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Bộ lọc</CardTitle>
@@ -565,7 +538,6 @@ const BookingManagementPage: React.FC = () => {
           </CardContent>
         </Card>
         
-        {/* Bookings Table */}
         <Card>
           <CardContent className="p-0">
             <Tabs defaultValue="list" className="w-full">
@@ -711,7 +683,6 @@ const BookingManagementPage: React.FC = () => {
                         }}
                       />
                     </div>
-                    {/* Legend */}
                     <div className="flex space-x-4 items-center flex-wrap mt-4 pt-4 border-t">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 rounded-sm bg-yellow-500"></div>
@@ -734,7 +705,6 @@ const BookingManagementPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Booking Detail Modal */}
       <Dialog open={showBookingDetail} onOpenChange={setShowBookingDetail}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -809,7 +779,6 @@ const BookingManagementPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Available Actions */}
                 {getAvailableActions(selectedBooking).length > 0 && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Thao tác</h3>

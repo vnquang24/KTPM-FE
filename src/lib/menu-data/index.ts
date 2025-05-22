@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { MenuItem } from '@/components/panel/menu-item/type';
 
-// Menu dành cho khách hàng (customer)
 export const customerMenuItems: MenuItem[] = [
   {
     icon: User,
@@ -37,7 +36,6 @@ export const customerMenuItems: MenuItem[] = [
   },
 ];
 
-// Menu dành cho chủ sân (owner)
 export const ownerMenuItems: MenuItem[] = [
   {
     icon: BarChart2,
@@ -66,7 +64,6 @@ export const ownerMenuItems: MenuItem[] = [
   }
 ];
 
-// Menu dành cho quản trị viên (admin)
 export const adminMenuItems: MenuItem[] = [
   {
     icon: Users,
@@ -80,7 +77,6 @@ export const adminMenuItems: MenuItem[] = [
   },
 ];
 
-// Export mặc định tất cả menu items
 export const menuItems = {
   admin: adminMenuItems,
   owner: ownerMenuItems,

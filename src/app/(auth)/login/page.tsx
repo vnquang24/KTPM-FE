@@ -1,4 +1,3 @@
-// pages/login.tsx
 'use client';
 
 import React, {useEffect} from 'react';
@@ -9,7 +8,6 @@ import { z } from 'zod';
 import { authenticate, setAuthenticated, isAuthenticated, setUserData, getUserData } from '@/utils/auth';
 import { useState } from 'react';
 
-// Định nghĩa schema Zod cho form login
 const loginFormSchema = z.object({
   username: z.string().min(1, {
     message: 'Tên đăng nhập không được để trống',
@@ -28,7 +26,6 @@ const LoginPage: React.FC = () => {
   
   useEffect(() => {
     if (isAuthenticated()) {
-      // Chuyển hướng dựa vào role của người dùng
       const userData = getUserData();
       if (userData && userData.role) {
         switch (userData.role) {
@@ -52,7 +49,6 @@ const LoginPage: React.FC = () => {
   
   const isDev = process.env.NODE_ENV === 'development';
 
-  // Sử dụng React Hook Form với Zod Resolver
   const {
     register,
     handleSubmit,
@@ -62,7 +58,6 @@ const LoginPage: React.FC = () => {
     resolver: zodResolver(loginFormSchema),
   });
 
-  // Nếu đang ở môi trường dev, tự động điền username và password
   React.useEffect(() => {
     if (isDev) {
       setValue('username', 'admin');
@@ -78,10 +73,8 @@ const LoginPage: React.FC = () => {
       const success = await authenticate(data.username, data.password);
       
       if (success) {
-        // Lấy thông tin người dùng sau khi đăng nhập thành công
         const userData = getUserData();
         
-        // Chuyển hướng dựa vào role của người dùng
         if (userData && userData.role) {
           switch (userData.role) {
             case 'ADMIN':
@@ -117,9 +110,7 @@ const LoginPage: React.FC = () => {
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-2xl font-semibold text-center mb-6">Đăng nhập</h2>
 
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Username input */}
           <div className="mb-4">
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">
               Tên đăng nhập
@@ -136,7 +127,6 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
-          {/* Password input */}
           <div className="mb-4">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Mật khẩu
@@ -153,12 +143,10 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
-          {/* Hiển thị lỗi đăng nhập */}
           {loginError && (
             <p className="text-red-500 text-sm mb-4">{loginError}</p>
           )}
 
-          {/* Submit button */}
           <button
             type="submit"
             disabled={isLoading}

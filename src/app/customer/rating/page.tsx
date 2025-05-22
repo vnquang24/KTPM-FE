@@ -59,7 +59,6 @@ export default function RatingPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [activeTab, setActiveTab] = useState<"my-reviews" | "pending">("my-reviews");
 
-  // Fetch user's reviews
   const { data: reviewsData, isLoading: isLoadingReviews, refetch: refetchReviews } = useFindManyReview(
     {
       where: {
@@ -89,7 +88,6 @@ export default function RatingPage() {
     }
   );
 
-  // Fetch user's completed bookings that don't have reviews yet
   const { data: pendingReviewsData, isLoading: isLoadingPending, refetch: refetchPending } = useFindManyBooking(
     {
       where: {
@@ -132,15 +130,12 @@ export default function RatingPage() {
       },
       {
         onSuccess: () => {
-          // Thông báo thành công
           toast.success('Đã xóa đánh giá thành công');
           
-          // Refresh data
           refetchReviews();
           refetchPending();
         },
         onError: (error) => {
-          // Thông báo lỗi
           toast.error(`Không thể xóa đánh giá: ${error.message}`);
         }
       }
@@ -336,7 +331,6 @@ export default function RatingPage() {
   );
 }
 
-// Hàm format thời gian từ Date
 const formatTime = (timeDate: Date | string | null | undefined) => {
   if (!timeDate) return "N/A";
   if (timeDate instanceof Date) {
@@ -345,7 +339,6 @@ const formatTime = (timeDate: Date | string | null | undefined) => {
   return typeof timeDate === 'string' ? timeDate.substring(0, 5) : "N/A";
 };
 
-// Dialog đánh giá sân mới
 function RatingDialog({ bookingId, refetch }: { bookingId: string, refetch: () => void }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -370,16 +363,13 @@ function RatingDialog({ bookingId, refetch }: { bookingId: string, refetch: () =
       },
       {
         onSuccess: () => {
-          // Thông báo thành công
           toast.success('Đã gửi đánh giá của bạn thành công');
           
-          // Refresh data
           refetch();
           setIsSubmitting(false);
         },
         onError: (error) => {
           console.error("Lỗi khi gửi đánh giá:", error);
-          // Thông báo lỗi
           toast.error(`Không thể gửi đánh giá: ${error.message}`);
           setIsSubmitting(false);
         }
@@ -435,7 +425,6 @@ function RatingDialog({ bookingId, refetch }: { bookingId: string, refetch: () =
   );
 }
 
-// Dialog chỉnh sửa đánh giá
 function EditReviewDialog({ review, refetch }: { review: any, refetch: () => void }) {
   const [rating, setRating] = useState(review.rating);
   const [comment, setComment] = useState(review.text || "");
@@ -458,16 +447,13 @@ function EditReviewDialog({ review, refetch }: { review: any, refetch: () => voi
       },
       {
         onSuccess: () => {
-          // Thông báo thành công
           toast.success('Đã cập nhật đánh giá của bạn thành công');
           
-          // Refresh data
           refetch();
           setIsSubmitting(false);
         },
         onError: (error) => {
           console.error("Lỗi khi cập nhật đánh giá:", error);
-          // Thông báo lỗi
           toast.error(`Không thể cập nhật đánh giá: ${error.message}`);
           setIsSubmitting(false);
         }

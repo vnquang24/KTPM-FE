@@ -9,7 +9,6 @@ import image2 from "../../../../public/2.jpg"
 import image5 from "../../../../public/5.jpg"
 import image3 from "../../../../public/3.webp"
 import image6 from "../../../../public/6.jpg"
-// Module Tìm kiếm sân
 const CourtSearchModule = () => {
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
@@ -18,14 +17,12 @@ const CourtSearchModule = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [availableSubFields, setAvailableSubFields] = useState<any[]>([]);
 
-  // Fetch tất cả các sân
   const { data: fields, isLoading: isLoadingFields } = useFindManyField({
     include: {
       subFields: true,
     },
   });
   console.log('fields:', fields);
-  // Fetch tất cả các sub-fields để lọc
   const { data: subFields, isLoading: isLoadingSubFields } = useFindManySubField({
     where: {
       status: {
@@ -44,7 +41,6 @@ const CourtSearchModule = () => {
     },
   });
 
-  // Fetch tất cả bookings để kiểm tra trùng lịch
   const { data: bookings, isLoading: isLoadingBookings } = useFindManyBooking({
     where: {
       status: {
@@ -60,10 +56,8 @@ const CourtSearchModule = () => {
     }
   });
 
-  // Danh sách địa điểm (lấy từ dữ liệu thực tế)
   const locations = fields ? [...new Set(fields.map(field => field.location))] : [];
 
-  // Phân loại giá sân
   const priceRanges = [
     { value: "", label: "Tất cả mức giá" },
     { value: "0-100000", label: "Dưới 100.000đ" },
@@ -82,10 +76,8 @@ const CourtSearchModule = () => {
       return;
     }
 
-    // Định dạng ngày tìm kiếm
     const searchDate = new Date(date);
 
-    // Log dữ liệu tìm kiếm
     console.log('Thông tin tìm kiếm:', {
       location,
       date,
@@ -94,14 +86,12 @@ const CourtSearchModule = () => {
       searchDate: searchDate.toISOString()
     });
 
-    // Lọc các sub-fields có sẵn dựa trên điều kiện tìm kiếm
     if (subFields) {
       console.log('Dữ liệu sân:', subFields);
 
       const filteredSubFields = subFields.filter(subField => {
         console.log('Đang kiểm tra sân:', subField.id, subField.subfieldDescription);
 
-        // Lọc theo địa điểm
         if (location) {
           const field = fields?.find(f => f.id === subField.fieldId);
           console.log('Kiểm tra địa điểm:', {
@@ -115,7 +105,6 @@ const CourtSearchModule = () => {
           }
         }
 
-        // Lọc theo phạm vi giá
         if (priceRange) {
           const [minPrice, maxPrice] = priceRange.split('-').map(Number);
           console.log('Kiểm tra giá:', {
@@ -130,7 +119,6 @@ const CourtSearchModule = () => {
               return false;
             }
           } else {
-            // Trường hợp "Trên x đồng"
             if (subField.price < minPrice) {
               console.log('Loại: Giá thấp hơn yêu cầu');
               return false;
@@ -201,7 +189,6 @@ const CourtSearchModule = () => {
         </div>
       </form>
 
-      {/* Hiển thị kết quả tìm kiếm */}
       {availableSubFields.length > 0 && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold mb-4">Sân có sẵn ({availableSubFields.length})</h3>
@@ -239,7 +226,6 @@ const CourtSearchModule = () => {
         </div>
       )}
 
-      {/* Hiển thị thông báo khi không tìm thấy sân */}
       {availableSubFields.length === 0 && isSearching === false && date && location && (
         <div className="mt-8 text-center p-4 bg-gray-50 rounded-lg">
           <p className="text-gray-600">Không tìm thấy sân phù hợp với tiêu chí của bạn.</p>
@@ -250,9 +236,7 @@ const CourtSearchModule = () => {
   );
 };
 
-// Module Thông tin chi tiết sân
 const CourtInfoModule = () => {
-  // Sử dụng hook để lấy danh sách field 
   const { data: fields, isLoading: isLoadingFields } = useFindManyField({
     include: {
       subFields: {
@@ -271,20 +255,16 @@ const CourtInfoModule = () => {
     }
   });
 
-  // Xử lý dữ liệu để tính rating trung bình
   const topRatedFields = fields?.map(field => {
-    // Thu thập tất cả các đánh giá từ các booking của subfields
     const allReviews = field.subFields?.flatMap(subField =>
       subField.bookings?.filter(booking => booking.review !== null)
         .map(booking => booking.review) || []
     ) || [];
 
-    // Tính rating trung bình từ tất cả reviews nếu có
     const averageRating = allReviews.length > 0
       ? allReviews.reduce((sum, review) => sum + (review?.rating || 0), 0) / allReviews.length
       : 0;
 
-    // Tính giá trung bình từ subFields
     const priceRange = field.subFields && field.subFields.length > 0
       ? {
         min: Math.min(...field.subFields.map(sub => sub.price)),
@@ -292,7 +272,6 @@ const CourtInfoModule = () => {
       }
       : { min: 0, max: 0 };
 
-    // Các tiện ích (mặc định)
     const amenities = ["Phòng thay đồ", "WiFi miễn phí", "Chỗ đậu xe", "Nước uống miễn phí"];
 
     return {
@@ -307,7 +286,6 @@ const CourtInfoModule = () => {
     };
   }) || [];
 
-  // Sắp xếp theo rating giảm dần
   topRatedFields.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
 
   return (
@@ -315,7 +293,6 @@ const CourtInfoModule = () => {
       <h2 className="text-3xl font-bold text-center mb-8">Sân PickleBall nổi bật</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {isLoadingFields ? (
-          // Hiển thị skeleton loader khi đang tải
           Array(3).fill(0).map((_, idx) => (
             <div key={idx} className="bg-white rounded-xl overflow-hidden shadow-md animate-pulse">
               <div className="h-48 bg-gray-200"></div>
@@ -387,7 +364,6 @@ const CourtInfoModule = () => {
   );
 };
 
-// Module Đặt sân
 const BookingModule = () => {
 
 
@@ -458,7 +434,6 @@ const BookingModule = () => {
   );
 };
 
-// Mục Giới thiệu về PickleBall
 const AboutSection = () => {
 
   return (
@@ -501,7 +476,6 @@ const AboutSection = () => {
 export default function Home() {
   return (
     <div className="flex flex-col items-center gap-20 py-12">
-      {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 py-20">
         <div className="container mx-auto px-4">
           <div className="md:flex items-center justify-between">
@@ -544,27 +518,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Search Module Section */}
       <section id="search" className="-mt-10 w-full max-w-4xl mx-auto px-4">
         <CourtSearchModule />
       </section>
 
-      {/* Court Info Section */}
       <section id="courts" className="w-full px-4 py-10">
         <CourtInfoModule />
       </section>
 
-      {/* Booking Section */}
       <section id="booking" className="w-full px-4 py-10 bg-blue-50">
         <BookingModule />
       </section>
 
-      {/* About Section */}
       <section id="about" className="w-full px-4 py-10">
         <AboutSection />
       </section>
 
-      {/* Testimonials Section */}
       <section className="w-full px-4 py-10 bg-gray-50">
         <div className="w-full max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-10">Khách hàng nói gì về chúng tôi</h2>
@@ -576,9 +545,7 @@ export default function Home() {
   );
 }
 
-// Component hiển thị đánh giá của khách hàng
 const TestimonialsSection = () => {
-  // Lấy các đánh giá từ database, sắp xếp theo thời gian tạo giảm dần và lấy 3 đánh giá mới nhất
   const { data: reviews, isLoading } = useFindManyReview({
     where: {
       rating: {
@@ -603,7 +570,6 @@ const TestimonialsSection = () => {
     take: 3
   });
 
-  // Tạo placeholder để hiển thị khi đang tải dữ liệu
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -630,7 +596,6 @@ const TestimonialsSection = () => {
     );
   }
 
-  // Hiển thị tin nhắn khi không có đánh giá nào
   if (!reviews || reviews.length === 0) {
     return (
       <div className="text-center py-10">
@@ -642,7 +607,6 @@ const TestimonialsSection = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {reviews.map((review) => {
-        // Kiểm tra và lấy dữ liệu một cách an toàn
         const booking = review.booking;
         const username = booking?.customUser?.account?.username || 'Khách hàng ẩn danh';
         const userInitial = username.charAt(0);

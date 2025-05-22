@@ -15,7 +15,6 @@ import {
 } from "@/generated/hooks";
 import image6 from "../../../../../public/6.jpg"
 
-// Thêm component GoogleMap
 const GoogleMap = ({ address }: { address: string }) => {
   const encodedAddress = encodeURIComponent(address);
   
@@ -63,7 +62,6 @@ const FieldDetailsPage = () => {
   const [selectedEndTime, setSelectedEndTime] = useState<string>(endTime || "");
   const [activeTab, setActiveTab] = useState<"info" | "reviews" | "location">("info");
 
-  // Fetch thông tin chi tiết về sân
   const { data: field, isLoading: isLoadingField } = useFindUniqueField({
     where: {
       id: fieldId
@@ -79,7 +77,6 @@ const FieldDetailsPage = () => {
     }
   });
 
-  // Fetch thông tin về sub-fields của sân này
   const { data: subfields, isLoading: isLoadingSubfields } = useFindManySubField({
     where: {
       fieldId: fieldId
@@ -90,7 +87,6 @@ const FieldDetailsPage = () => {
     }
   });
 
-  // Fetch đánh giá của sân
   const { data: reviews, isLoading: isLoadingReviews } = useFindManyReview({
     where: {
       booking: {
@@ -115,7 +111,6 @@ const FieldDetailsPage = () => {
     }
   });
 
-  // Fetch bookings để kiểm tra khả dụng của sân
   const { data: bookings, isLoading: isLoadingBookings } = useFindManyBooking({
     where: {
       subfieldId: selectedSubfield || undefined,
@@ -125,40 +120,32 @@ const FieldDetailsPage = () => {
     }
   });
 
-  // Tính rating trung bình của sân
   const averageRating = reviews && reviews.length > 0
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
     : "Chưa có đánh giá";
 
-  // Tính tổng giá tiền dựa trên khoảng thời gian
   const calculateTotalPrice = (startTime: string, endTime: string, pricePerHour: number) => {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
     
-    // Tính số giờ (có thể là số thập phân)
     const hours = (endHour - startHour) + (endMinute - startMinute) / 60;
     
-    // Tính tổng giá
     return Math.round(pricePerHour * hours);
   };
 
-  // Danh sách giờ có thể chọn
   const timeSlots = [
     "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
     "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00","23:00"
   ];
 
-  // Lấy giờ mở cửa và đóng cửa cho ngày đã chọn
   const getOpeningHoursForDate = (dateStr: string) => {
     if (!field || !field.openingHours || field.openingHours.length === 0) {
-      // Nếu không có dữ liệu giờ mở cửa, trả về giá trị mặc định
       return { openTime: "06:00", closeTime: "22:00", isOpen: true };
     }
 
     const selectedDate = new Date(dateStr);
     const dayOfWeek = selectedDate.getDay();
     
-    // Map thứ trong tuần từ JavaScript sang format trong data
     const dayMapping: Record<number, string> = {
       0: "SUNDAY",
       1: "MONDAY",
@@ -169,7 +156,6 @@ const FieldDetailsPage = () => {
       6: "SATURDAY"
     };
     
-    // Tìm thông tin giờ mở cửa cho ngày đã chọn
     const openingHourForDay = field.openingHours.find(oh => 
       oh.dayOfWeek === dayMapping[dayOfWeek]
     );
@@ -181,47 +167,37 @@ const FieldDetailsPage = () => {
         isOpen: true
       };
     } else {
-      // Nếu ngày này đóng cửa hoặc không tìm thấy thông tin
       return { openTime: "", closeTime: "", isOpen: false };
     }
   };
 
-  // Lọc danh sách giờ có thể chọn dựa trên giờ mở cửa
   const getAvailableTimeSlots = (dateStr: string) => {
     const { openTime, closeTime, isOpen } = getOpeningHoursForDate(dateStr);
     
     if (!isOpen) return [];
     
     return timeSlots.filter(time => {
-      // Bao gồm cả giờ mở cửa và cho phép chọn giờ đóng cửa làm giờ kết thúc
       return time >= openTime && time <= closeTime;
     });
   };
 
-  // Danh sách giờ khả dụng cho ngày đã chọn
   const availableTimeSlots = getAvailableTimeSlots(selectedDate);
 
-  // Cập nhật giờ kết thúc khi giờ bắt đầu thay đổi
   useEffect(() => {
     if (selectedStartTime) {
       const startIndex = timeSlots.findIndex(time => time === selectedStartTime);
       if (startIndex !== -1 && startIndex < timeSlots.length - 1) {
-        // Tìm giờ kết thúc gần nhất sau giờ bắt đầu mà vẫn trong giờ mở cửa
         const { closeTime } = getOpeningHoursForDate(selectedDate);
-        // Đảm bảo có thể chọn cả thời gian đóng cửa
         const availableEndTimes = timeSlots.slice(startIndex + 1).filter(time => {
-          // So sánh giờ theo định dạng hh:mm
           const [timehour, timeminute] = time.split(':').map(Number);
           const [closehour, closeminute] = closeTime.split(':').map(Number);
           
-          // Tạo Date object để so sánh
           const timeDate = new Date();
           timeDate.setHours(timehour, timeminute, 0, 0);
           
           const closeDate = new Date();
           closeDate.setHours(closehour, closeminute, 0, 0);
           
-          // Cho phép chọn thời gian nhỏ hơn hoặc bằng thời gian đóng cửa
           return timeDate <= closeDate;
         });
         
@@ -236,7 +212,6 @@ const FieldDetailsPage = () => {
     }
   }, [selectedStartTime, selectedDate]);
 
-  // Kiểm tra xem subfield có khả dụng để đặt không - cho phép status AVAILABLE hoặc RESERVED
   const isSubfieldAvailable = (subfieldId: string) => {
     if (!subfields) return false;
     
@@ -246,11 +221,9 @@ const FieldDetailsPage = () => {
     return subfield.status === "AVAILABLE" || subfield.status === "RESERVED";
   };
 
-  // Kiểm tra xem một khoảng thời gian có khả dụng không với lý do cụ thể
   const isTimeRangeAvailable = (startTime: string, endTime: string, subfieldId: string, dateStr: string) => {
     if (!bookings || !subfieldId || !dateStr || !startTime || !endTime) return true;
     
-    // Kiểm tra subfield có ở trạng thái AVAILABLE hoặc RESERVED không
     if (!isSubfieldAvailable(subfieldId)) return false;
     
     const selectedDateTime = new Date(dateStr);
@@ -263,21 +236,16 @@ const FieldDetailsPage = () => {
     const rangeEndTime = new Date(selectedDateTime);
     rangeEndTime.setHours(endHour, endMinute, 0, 0);
 
-    // Kiểm tra nếu giờ kết thúc trước giờ bắt đầu
     if (rangeEndTime <= rangeStartTime) return false;
 
-    // Kiểm tra thời gian mở cửa của sân
     if (!isWithinOpeningHours(rangeStartTime, rangeEndTime, selectedDateTime)) return false;
 
-    // Kiểm tra xung đột lịch đặt sân
     return !hasBookingConflict(subfieldId, selectedDateTime, rangeStartTime, rangeEndTime);
   };
 
-  // Kiểm tra xem một slot thời gian có khả dụng không
   const isTimeSlotAvailable = (time: string, subfieldId: string, dateStr: string) => {
     if (!bookings || !subfieldId || !dateStr) return true;
     
-    // Kiểm tra subfield có ở trạng thái AVAILABLE hoặc RESERVED không
     if (!isSubfieldAvailable(subfieldId)) return false;
     
     const selectedDateTime = new Date(dateStr);
@@ -289,24 +257,18 @@ const FieldDetailsPage = () => {
     const endTime = new Date(selectedDateTime);
     endTime.setHours(hours + 1, 0, 0, 0);
 
-    // Kiểm tra thời gian mở cửa của sân
     if (!isWithinOpeningHours(startTime, endTime, selectedDateTime)) return false;
 
-    // Kiểm tra xung đột lịch đặt sân
     return !hasBookingConflict(subfieldId, selectedDateTime, startTime, endTime);
   };
 
-  // Kiểm tra xem thời gian có nằm trong giờ mở cửa không
   const isWithinOpeningHours = (startTime: Date, endTime: Date, dateTime: Date) => {
     if (!field || !field.openingHours || field.openingHours.length === 0) {
-      // Nếu không có dữ liệu giờ mở cửa, mặc định là được
       return true;
     }
 
-    // Lấy thứ trong tuần (0 = Sunday, 1 = Monday, ...)
     const dayOfWeek = dateTime.getDay();
     
-    // Map thứ trong tuần từ JavaScript sang format trong data
     const dayMapping: Record<number, string> = {
       0: "SUNDAY",
       1: "MONDAY",
@@ -317,32 +279,26 @@ const FieldDetailsPage = () => {
       6: "SATURDAY"
     };
     
-    // Tìm thông tin giờ mở cửa của ngày đã chọn
     const openingHourForDay = field.openingHours.find(oh => 
       oh.dayOfWeek === dayMapping[dayOfWeek] && oh.isOpen
     );
     
     if (openingHourForDay) {
-      // Lấy giờ mở cửa và đóng cửa
       const [openHour, openMinute] = openingHourForDay.openTime.substring(0, 5).split(':').map(Number);
       const [closeHour, closeMinute] = openingHourForDay.closeTime.substring(0, 5).split(':').map(Number);
       
-      // Tạo datetime mở cửa và đóng cửa
       const openTime = new Date(dateTime);
       openTime.setHours(openHour, openMinute, 0, 0);
       
       const closeTime = new Date(dateTime);
       closeTime.setHours(closeHour, closeMinute, 0, 0);
       
-      // Kiểm tra nếu thời gian đặt nằm ngoài giờ mở cửa
       return !(startTime < openTime || endTime > closeTime);
     } else {
-      // Không tìm thấy thông tin giờ mở cửa cho ngày đã chọn hoặc sân đóng cửa vào ngày này
       return false;
     }
   };
 
-  // Kiểm tra xung đột lịch đặt sân
   const hasBookingConflict = (subfieldId: string, selectedDateTime: Date, startTime: Date, endTime: Date) => {
     if (!bookings) return false;
     
@@ -350,7 +306,6 @@ const FieldDetailsPage = () => {
       if (booking.subfieldId !== subfieldId) return false;
       
       const bookingDate = new Date(booking.date);
-      // Kiểm tra nếu không cùng ngày
       if (bookingDate.getDate() !== selectedDateTime.getDate() || 
           bookingDate.getMonth() !== selectedDateTime.getMonth() || 
           bookingDate.getFullYear() !== selectedDateTime.getFullYear()) {
@@ -360,8 +315,6 @@ const FieldDetailsPage = () => {
       const bookingStartTime = new Date(booking.beginTime);
       const bookingEndTime = new Date(booking.endTime);
       
-      // Kiểm tra xem thời gian có trùng nhau không
-      // Nếu booking bắt đầu trước khi kết thúc tìm kiếm và booking kết thúc sau khi bắt đầu tìm kiếm
       return (bookingStartTime < endTime && bookingEndTime > startTime);
     });
   };
@@ -388,7 +341,6 @@ const FieldDetailsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header Section */}
       <div className="mb-8">
         <div className="relative h-80 rounded-xl overflow-hidden mb-4">
           <Image
@@ -416,11 +368,8 @@ const FieldDetailsPage = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Info */}
         <div className="lg:col-span-2">
-          {/* Tabs */}
           <div className="border-b border-gray-200 mb-6">
             <nav className="flex space-x-8">
               <button
@@ -456,7 +405,6 @@ const FieldDetailsPage = () => {
             </nav>
           </div>
 
-          {/* Tab Content */}
           <div className="pb-8">
             {activeTab === "info" && (
               <div>
@@ -614,7 +562,6 @@ const FieldDetailsPage = () => {
           </div>
         </div>
 
-        {/* Right Column - Booking */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-xl shadow-lg sticky top-20">
             <h2 className="text-2xl font-bold mb-6 text-center">Đặt sân ngay</h2>
@@ -665,7 +612,6 @@ const FieldDetailsPage = () => {
                 <option value="">Chọn giờ kết thúc</option>
                 {selectedStartTime && availableTimeSlots
                   .filter(time => {
-                    // Lọc ra các giờ kết thúc sau giờ bắt đầu đã chọn
                     const startIndex = timeSlots.findIndex(t => t === selectedStartTime);
                     const timeIndex = timeSlots.findIndex(t => t === time);
                     return timeIndex > startIndex;

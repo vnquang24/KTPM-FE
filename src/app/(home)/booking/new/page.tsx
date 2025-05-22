@@ -31,20 +31,16 @@ const BookingForm = () => {
   const [bookingError, setBookingError] = useState("");
   const [isComplete, setIsComplete] = useState(false);
   const [bookingData, setBookingData] = useState<any>(null);
-  // Thêm state để hiển thị màn hình QR
   const [showPaymentQR, setShowPaymentQR] = useState(false);
 
-  // Thêm state để lưu thông tin tài khoản mới tạo
   const [newAccountInfo, setNewAccountInfo] = useState<{
     username: string;
     password: string;
   } | null>(null);
 
-  // Kiểm tra người dùng đã đăng nhập hay chưa
   const [loggedIn, setLoggedIn] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Kiểm tra customUser hiện tại nếu đã đăng nhập
   const { data: loggedInCustomUser, isLoading: isLoadingCustomUser } = useFindUniqueCustomUser({
     where: {
       accountId: currentUserId || ""
@@ -53,7 +49,6 @@ const BookingForm = () => {
     enabled: !!currentUserId && currentUserId.length > 0
   });
 
-  // Lấy thông tin chi tiết tài khoản nếu đã đăng nhập
   const { data: currentAccount } = useFindFirstAccount({
     where: {
       id: currentUserId || ""
@@ -71,7 +66,6 @@ const BookingForm = () => {
     const isUserLoggedIn = isAuthenticated();
     setLoggedIn(isUserLoggedIn);
 
-    // Nếu đã đăng nhập, lấy thông tin người dùng
     if (isUserLoggedIn) {
       const userData = getUserData();
       if (userData) {
@@ -79,13 +73,11 @@ const BookingForm = () => {
       }
     }
 
-    // Nếu không có subfieldId hoặc date hoặc startTime hoặc endTime, chuyển hướng về trang home
     if (!subfieldId || !dateParam || !startTimeParam || !endTimeParam) {
       router.push("/home");
     }
   }, [subfieldId, dateParam, startTimeParam, endTimeParam, router]);
 
-  // Cập nhật thông tin người dùng từ tài khoản hiện tại
   useEffect(() => {
     if (currentAccount) {
       if (currentAccount.phone) setPhone(currentAccount.phone);
@@ -93,7 +85,6 @@ const BookingForm = () => {
     }
   }, [currentAccount]);
 
-  // Fetch thông tin chi tiết về sân con
   const { data: subfield, isLoading } = useFindUniqueSubField({
     where: {
       id: subfieldId || ""
@@ -103,16 +94,12 @@ const BookingForm = () => {
     }
   });
 
-  // Hook để tạo booking mới
   const createBookingMutation = useCreateBooking();
 
-  // Hook để tạo customUser
   const createCustomUserMutation = useCreateCustomUser();
 
-  // Hook để cập nhật trạng thái subfield
   const updateSubFieldMutation = useUpdateSubField();
 
-  // Hook để kiểm tra email đã tồn tại chưa
   const [checkEmail, setCheckEmail] = useState("");
   const { data: existingAccountWithEmail } = useFindFirstAccount({
     where: {
@@ -122,7 +109,6 @@ const BookingForm = () => {
     enabled: !!checkEmail && checkEmail.length > 0
   });
 
-  // Hook để kiểm tra SĐT đã tồn tại chưa
   const [checkPhone, setCheckPhone] = useState("");
   const { data: existingAccountWithPhone } = useFindFirstAccount({
     where: {
@@ -132,7 +118,6 @@ const BookingForm = () => {
     enabled: !!checkPhone && checkPhone.length > 0
   });
 
-  // Hook để kiểm tra customUser tồn tại
   const [checkCustomUserId, setCheckCustomUserId] = useState<string | null>(null);
   const { data: existingCustomUser } = useFindUniqueCustomUser({
     where: {
@@ -142,58 +127,46 @@ const BookingForm = () => {
     enabled: !!checkCustomUserId
   });
 
-  // Hàm tạo tên người dùng duy nhất dựa trên email hoặc số điện thoại
   const generateUniqueUsername = (email: string, phone: string) => {
     const timestamp = new Date().getTime();
     const randomSuffix = Math.floor(Math.random() * 1000);
 
-    // Nếu có email, lấy phần trước @ của email làm username
     if (email && email.trim()) {
       const emailPrefix = email.trim().split('@')[0];
       return `${emailPrefix}_${timestamp}_${randomSuffix}`;
     }
 
-    // Nếu không có email, sử dụng số điện thoại
     return `user_${phone.trim()}_${timestamp}_${randomSuffix}`;
   };
 
-  // Tính tổng giá tiền dựa trên khoảng thời gian
   const calculateTotalPrice = (startTime: string, endTime: string, pricePerHour: number) => {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    // Tính số giờ (có thể là số thập phân)
     const hours = (endHour - startHour) + (endMinute - startMinute) / 60;
 
-    // Tính tổng giá
     return Math.round(pricePerHour * hours);
   };
 
-  // Tính số giờ giữa hai thời điểm
   const calculateHours = (startTime: string, endTime: string) => {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    // Tính số giờ (có thể là số thập phân)
     const hours = (endHour - startHour) + (endMinute - startMinute) / 60;
 
-    // Làm tròn đến 1 chữ số thập phân
     return hours.toFixed(1);
   };
 
-  // Hàm xử lý khi người dùng hoàn tất thanh toán
   const handleCompletePayment = () => {
     setShowPaymentQR(false);
     setIsComplete(true);
   };
 
-  // Xử lý khi submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setBookingError("");
 
-    // Kiểm tra các trường bắt buộc
     if (!name.trim()) {
       setBookingError("Vui lòng nhập họ tên");
       setIsSubmitting(false);
@@ -206,7 +179,6 @@ const BookingForm = () => {
       return;
     }
 
-    // Kiểm tra định dạng số điện thoại
     const phoneRegex = /^[0-9]{10,11}$/;
     if (!phoneRegex.test(phone.trim())) {
       setBookingError("Số điện thoại không hợp lệ (phải có 10-11 chữ số)");
@@ -214,7 +186,6 @@ const BookingForm = () => {
       return;
     }
 
-    // Kiểm tra email nếu có
     if (email && !email.trim().match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
       setBookingError("Email không hợp lệ");
       setIsSubmitting(false);
@@ -230,22 +201,17 @@ const BookingForm = () => {
     try {
       let customUserId = "";
 
-      // Nếu người dùng đã đăng nhập, sử dụng customUser hiện tại
       if (loggedIn && loggedInCustomUser) {
         customUserId = loggedInCustomUser.id;
         console.log("Sử dụng customUser đã đăng nhập:", customUserId);
       }
-      // Nếu chưa đăng nhập, tạo tài khoản mới
       else {
-        // Tạo username duy nhất từ email hoặc số điện thoại
         const uniqueUsername = generateUniqueUsername(email || '', phone.trim());
 
-        // Tạo mật khẩu ngẫu nhiên (tối thiểu 6 ký tự)
         const randomPassword = Math.random().toString(36).slice(-8);
 
         console.log("Đang tạo tài khoản mới với username:", uniqueUsername);
 
-        // Đăng ký tài khoản mới qua API thay vì sử dụng mutation
         const registerData = {
           username: uniqueUsername,
           password: randomPassword,
@@ -274,14 +240,12 @@ const BookingForm = () => {
         const newAccount = registerResponse.data.user;
         console.log("Tạo tài khoản thành công, ID:", newAccount.id);
 
-        // Lưu thông tin tài khoản để hiển thị sau khi đặt sân thành công
         setNewAccountInfo({
           username: uniqueUsername,
           password: randomPassword
         });
 
         console.log("Đang tạo customUser cho tài khoản");
-        // Tạo customUser để liên kết với tài khoản
         const newCustomUser = await createCustomUserMutation.mutateAsync({
           data: {
             description: `Khách hàng tự động tạo từ đặt sân`,
@@ -302,7 +266,6 @@ const BookingForm = () => {
       }
 
       console.log("Đang chuẩn bị dữ liệu đặt sân");
-      // Chuẩn bị dữ liệu cho booking
       const bookingDate = new Date(dateParam);
       const [startHour, startMinute] = startTimeParam.split(':').map(Number);
       const [endHour, endMinute] = endTimeParam.split(':').map(Number);
@@ -313,14 +276,12 @@ const BookingForm = () => {
       const endTime = new Date(bookingDate);
       endTime.setHours(endHour, endMinute, 0, 0);
 
-      // Tính tổng tiền dựa trên thời gian và giá sân
       const totalCost = calculateTotalPrice(
         startTimeParam,
         endTimeParam,
         subfield?.price || 0
       );
 
-      // Chuẩn bị thông tin người đặt sân để lưu vào description
       const bookingDescription = `
 Người đặt: ${name.trim()}
 SĐT: ${phone.trim()}
@@ -328,7 +289,6 @@ Email: ${email ? email.trim() : "Không có"}
 Ghi chú: ${note ? note.trim() : "Không có"}
       `;
 
-      // Tạo booking mới với trạng thái PENDING
       const bookingData: any = {
         date: bookingDate,
         beginTime: beginTime,
@@ -343,14 +303,12 @@ Ghi chú: ${note ? note.trim() : "Không có"}
 
       console.log("Dữ liệu booking cuối cùng:", bookingData);
 
-      // Tạo booking mới với đầy đủ thông tin bắt buộc
       const newBooking = await createBookingMutation.mutateAsync({
         data: bookingData
       });
 
       console.log("Tạo booking thành công:", newBooking);
 
-      // Cập nhật trạng thái subfield thành RESERVED
       if (newBooking) {
         console.log("Đang cập nhật trạng thái sân thành RESERVED");
         await updateSubFieldMutation.mutateAsync({
@@ -363,11 +321,9 @@ Ghi chú: ${note ? note.trim() : "Không có"}
 
         setBookingData(newBooking);
         
-        // Nếu phương thức thanh toán không phải là CASH, hiển thị màn hình QR
         if (paymentMethod !== "CASH") {
           setShowPaymentQR(true);
         } else {
-          // Nếu là tiền mặt, chuyển thẳng đến màn hình hoàn tất
           setIsComplete(true);
         }
       } else {
@@ -376,7 +332,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
     } catch (error: any) {
       console.error("Lỗi khi đặt sân:", error);
 
-      // Kiểm tra lỗi từ API đăng ký
       if (error.response && error.response.data) {
         const apiError = error.response.data;
         console.error("Lỗi API:", apiError);
@@ -427,7 +382,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
     );
   }
 
-  // Hiển thị màn hình QR và thông tin thanh toán
   if (showPaymentQR && bookingData) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-3xl">
@@ -556,7 +510,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
     );
   }
 
-  // Nếu đã hoàn tất đặt sân, hiển thị thông tin đặt sân thành công
   if (isComplete && bookingData) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-3xl">
@@ -571,7 +524,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
             <p className="text-gray-600">Cảm ơn bạn đã đặt sân PickleBall. Dưới đây là chi tiết đặt sân của bạn.</p>
           </div>
 
-          {/* Hiển thị thông tin tài khoản nếu vừa tạo mới */}
           {newAccountInfo && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
               <h3 className="text-lg font-bold text-blue-800 mb-2">Thông tin tài khoản của bạn</h3>
@@ -725,7 +677,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="md:flex">
-          {/* Thông tin sân và thanh toán */}
           <div className="md:w-2/5 bg-gray-50 p-6">
             <h2 className="text-2xl font-bold mb-6">Thông tin đặt sân</h2>
 

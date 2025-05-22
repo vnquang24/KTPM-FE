@@ -18,7 +18,6 @@ export default function HomeLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // Kiểm tra đăng nhập dựa vào hàm isAuthenticated
     const checkAuth = () => {
       const authStatus = isAuthenticated();
       setIsLoggedIn(authStatus);
@@ -38,7 +37,6 @@ export default function HomeLayout({
     
     checkAuth();
     
-    // Thêm event listener để kiểm tra mỗi khi focus vào trang
     window.addEventListener('focus', checkAuth);
     
     return () => {
@@ -79,7 +77,6 @@ export default function HomeLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header/Navbar */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -90,7 +87,6 @@ export default function HomeLayout({
               </Link>
             </div>
 
-            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/#courts" className="font-medium text-gray-600 hover:text-blue-600 transition-colors">
                 Các sân
@@ -106,7 +102,6 @@ export default function HomeLayout({
               </Link>
             </nav>
 
-            {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               {isLoggedIn ? (
                 <div className="relative">
@@ -157,7 +152,6 @@ export default function HomeLayout({
               </Button>
             </div>
 
-            {/* Mobile Menu Button */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -176,7 +170,6 @@ export default function HomeLayout({
             </div>
           </div>
 
-          {/* Mobile Menu */}
           {isMenuOpen && (
             <div className="md:hidden mt-4 pb-4">
               <nav className="flex flex-col space-y-4">
@@ -232,12 +225,10 @@ export default function HomeLayout({
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-grow">
         {children}
       </main>
 
-      {/* Footer */}
       <footer className="bg-gray-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">

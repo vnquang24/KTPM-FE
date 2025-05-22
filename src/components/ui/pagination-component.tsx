@@ -27,7 +27,6 @@ const PaginationComponent: React.FC<PaginationComponentProps> = ({
     const items = [];
 
     if (totalPages <= maxVisiblePages) {
-      // Hiển thị tất cả các trang nếu ít hơn maxVisiblePages
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
@@ -45,7 +44,6 @@ const PaginationComponent: React.FC<PaginationComponentProps> = ({
         );
       }
     } else {
-      // Luôn hiển thị trang đầu tiên
       items.push(
         <PaginationItem key={1}>
           <PaginationLink
@@ -61,11 +59,9 @@ const PaginationComponent: React.FC<PaginationComponentProps> = ({
         </PaginationItem>
       );
 
-      // Xác định các trang ở giữa cần hiển thị
       const leftBound = Math.max(2, currentPage - 1);
       const rightBound = Math.min(totalPages - 1, currentPage + 1);
 
-      // Thêm "..." nếu cần
       if (leftBound > 2) {
         items.push(
           <PaginationItem key="ellipsis-1">
@@ -74,7 +70,6 @@ const PaginationComponent: React.FC<PaginationComponentProps> = ({
         );
       }
 
-      // Thêm các trang ở giữa
       for (let i = leftBound; i <= rightBound; i++) {
         if (i !== 1 && i !== totalPages) {
           items.push(
@@ -94,7 +89,6 @@ const PaginationComponent: React.FC<PaginationComponentProps> = ({
         }
       }
 
-      // Thêm "..." nếu cần
       if (rightBound < totalPages - 1) {
         items.push(
           <PaginationItem key="ellipsis-2">
@@ -103,7 +97,6 @@ const PaginationComponent: React.FC<PaginationComponentProps> = ({
         );
       }
 
-      // Luôn hiển thị trang cuối cùng
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>

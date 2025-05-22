@@ -50,7 +50,6 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function ProfilePage() {
   const userId = getUserId();
 
-  // Fetch user account data
   const { data: userData, isLoading } = useFindUniqueAccount(
     {
       where: { id: userId || "" },
@@ -65,7 +64,6 @@ export default function ProfilePage() {
 
   const updateAccount = useUpdateAccount();
 
-  // Create form
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -76,7 +74,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Update form values when user data is loaded
   useEffect(() => {
     if (userData) {
       form.reset({
@@ -90,7 +87,6 @@ export default function ProfilePage() {
     }
   }, [userData, form]);
 
-  // Handle form submission
   function onSubmit(data: ProfileFormValues) {
     if (!userId) return;
 

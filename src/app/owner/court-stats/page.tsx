@@ -208,7 +208,6 @@ const CourtStatsPage: React.FC = () => {
 
     const subfieldBookings: Record<string, { id: string, name: string, fieldName: string, count: number, revenue: number }> = {};
 
-    // Initialize counters for each subfield
     subfields.forEach(subfield => {
       const subfieldName = subfield.subfieldDescription
         ? subfield.subfieldDescription
@@ -223,7 +222,6 @@ const CourtStatsPage: React.FC = () => {
       };
     });
 
-    // Count bookings per subfield
     bookings.forEach(booking => {
       const subfieldId = booking.subfieldId;
       if (subfieldId && subfieldBookings[subfieldId]) {
@@ -235,20 +233,17 @@ const CourtStatsPage: React.FC = () => {
     return Object.values(subfieldBookings);
   }, [bookings, subfields]);
 
-  // Module 3: Daily booking trends
   const dailyBookingTrends = useMemo(() => {
     if (!bookings || !startDate || !endDate) return [];
 
     const dailyData: Record<string, { date: string, count: number, revenue: number }> = {};
 
-    // Create entry for each day in range
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     days.forEach(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
       dailyData[dateStr] = { date: format(day, 'dd/MM', { locale: vi }), count: 0, revenue: 0 };
     });
 
-    // Count bookings per day
     bookings.forEach(booking => {
       const dateStr = format(new Date(booking.date), 'yyyy-MM-dd');
       if (dailyData[dateStr]) {
@@ -260,7 +255,6 @@ const CourtStatsPage: React.FC = () => {
     return Object.values(dailyData);
   }, [bookings, startDate, endDate]);
 
-  // Module 4: Revenue distribution by court
   const revenueDistribution = useMemo(() => {
     if (!bookings || !fields) return [];
 
@@ -269,7 +263,6 @@ const CourtStatsPage: React.FC = () => {
 
     const fieldRevenues: Record<string, number> = {};
 
-    // Sum revenue by field
     bookings.forEach(booking => {
       const fieldId = booking.subfield?.fieldId;
       if (fieldId) {
@@ -280,11 +273,9 @@ const CourtStatsPage: React.FC = () => {
       }
     });
 
-    // Create pie chart data
     Object.keys(fieldRevenues).forEach((fieldId, index) => {
       const field = fields.find(f => f.id === fieldId);
       if (field) {
-        // Tạo tên ngắn gọn cho biểu đồ
         const shortName = field.location.length > 15
           ? field.location.substring(0, 15) + '...'
           : field.location;
@@ -301,21 +292,18 @@ const CourtStatsPage: React.FC = () => {
     return revenueData;
   }, [bookings, fields]);
 
-  // Module 4b: Revenue distribution by subfield for each field
   const subFieldRevenueDistribution = useMemo(() => {
     if (!bookings || !fields) return {};
 
     const colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300',
       '#b19cd9', '#90ee90', '#ffb6c1', '#87ceeb', '#f08080', '#e6e6fa', '#d8bfd8', '#dda0dd'];
 
-    // Tạo map chứa doanh thu theo sân con, nhóm theo sân lớn
     const result: Record<string, {
       fieldName: string,
       totalRevenue: number,
       subfields: { name: string, value: number, color: string }[]
     }> = {};
 
-    // Khởi tạo dữ liệu các sân lớn
     fields.forEach(field => {
       result[field.id] = {
         fieldName: field.location,
@@ -343,15 +331,12 @@ const CourtStatsPage: React.FC = () => {
       const subfieldId = booking.subfieldId;
 
       if (fieldId && result[fieldId]) {
-        // Cộng doanh thu vào tổng của sân lớn
         result[fieldId].totalRevenue += booking.price;
 
-        // Lấy tên sân con
         const subfieldName = booking.subfield?.subfieldDescription
           ? booking.subfield.subfieldDescription
           : `Sân ${subfieldId.substring(0, 4)}`;
 
-        // Tìm và cộng doanh thu vào sân con
         const subfieldIndex = result[fieldId].subfields.findIndex(
           sf => sf.name === subfieldName
         );
@@ -359,7 +344,6 @@ const CourtStatsPage: React.FC = () => {
         if (subfieldIndex >= 0) {
           result[fieldId].subfields[subfieldIndex].value += booking.price;
         } else {
-          // Trường hợp chưa có sân con trong danh sách (hiếm khi xảy ra)
           result[fieldId].subfields.push({
             name: subfieldName,
             value: booking.price,
@@ -369,12 +353,10 @@ const CourtStatsPage: React.FC = () => {
       }
     });
 
-    // Lọc bỏ các sân không có doanh thu
     Object.keys(result).forEach(fieldId => {
       if (result[fieldId].totalRevenue === 0) {
         delete result[fieldId];
       } else {
-        // Lọc bỏ các sân con không có doanh thu
         result[fieldId].subfields = result[fieldId].subfields.filter(sf => sf.value > 0);
       }
     });
@@ -382,7 +364,6 @@ const CourtStatsPage: React.FC = () => {
     return result;
   }, [bookings, fields]);
 
-  // Format date for title display
   const getDateRangeDisplay = useMemo(() => {
     if (selectedDateRange === 'month') {
       return `Tháng ${format(startDate, 'MM/yyyy')}`;
@@ -397,12 +378,10 @@ const CourtStatsPage: React.FC = () => {
     return `${format(startDate, 'dd/MM/yyyy')} - ${format(endDate, 'dd/MM/yyyy')}`;
   }, [selectedDateRange, startDate, endDate]);
 
-  // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('vi-VN').format(value);
   };
 
-  // Custom tooltip for charts
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -428,7 +407,6 @@ const CourtStatsPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Filter Controls */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Bộ lọc</CardTitle>
@@ -518,9 +496,7 @@ const CourtStatsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Stats Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Module 1: Bookings per Court */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -568,7 +544,6 @@ const CourtStatsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Module 2: Revenue per Court */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -624,7 +599,6 @@ const CourtStatsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Module 3: Daily Booking Trends */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -659,7 +633,6 @@ const CourtStatsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Module 3b: Daily Revenue Trends */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -704,7 +677,6 @@ const CourtStatsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Module 4: Revenue Distribution */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -756,7 +728,6 @@ const CourtStatsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Module 4b: Revenue Distribution by SubField */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -790,7 +761,6 @@ const CourtStatsPage: React.FC = () => {
                                 dataKey="value"
                                 nameKey="name"
                                 label={({ name, percent }) => {
-                                  // Hiển thị tên sân con ngắn gọn
                                   const displayName = name.length > 15 ? name.substring(0, 15) + '...' : name;
                                   return `${displayName} ${(percent * 100).toFixed(0)}%`;
                                 }}
@@ -832,7 +802,6 @@ const CourtStatsPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* SubField Stats Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

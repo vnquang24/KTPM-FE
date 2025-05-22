@@ -54,10 +54,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-// Định nghĩa loại trạng thái đặt sân
 type BookingStatus = "pending" | "paid" | "cancel";
 
-// Component để hiển thị trạng thái đặt sân
 const BookingStatusBadge = ({ status }: { status: BookingStatus }) => {
   const statusConfig = {
     pending: { label: "Chờ xác nhận", className: "bg-yellow-100 text-yellow-800" },
@@ -81,7 +79,6 @@ export default function BookingHistoryPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const pageSize = 10;
   
-  // Fetch user's bookings
   const { data: bookingsData, isLoading, refetch } = useFindManyBooking(
     {
       where: {
@@ -109,7 +106,6 @@ export default function BookingHistoryPage() {
     }
   );
   console.log("bookingsData", bookingsData);
-  // Count total bookings for pagination
   const { data: totalBookings } = useFindManyBooking(
     {
       where: {
@@ -129,7 +125,6 @@ export default function BookingHistoryPage() {
 
   const totalPages = Math.ceil((totalBookings?.length || 0) / pageSize);
 
-  // Format date and time
   const formatDateTime = (dateString: string | Date | null | undefined) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -240,7 +235,6 @@ export default function BookingHistoryPage() {
                         </TableCell>
                         <TableCell>
                           <div className="font-medium">
-                            {/* @ts-ignore - field.name might not be in schema but exists in data */}
                             {booking.subfield?.field?.location || "Không xác định"}
                           </div>
                           <div className="text-sm text-muted-foreground">
@@ -316,7 +310,6 @@ export default function BookingHistoryPage() {
                     </PaginationItem>
                     
                     {Array.from({ length: totalPages }).map((_, i) => {
-                      // Hiển thị 5 trang gần nhất với trang hiện tại
                       if (
                         i === 0 || 
                         i === totalPages - 1 || 
@@ -373,7 +366,6 @@ export default function BookingHistoryPage() {
   );
 }
 
-// Dialog đánh giá sân
 function RatingDialog({ bookingId, subfieldId, refetch }: { bookingId: string, subfieldId: string, refetch: () => void }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -384,11 +376,9 @@ function RatingDialog({ bookingId, subfieldId, refetch }: { bookingId: string, s
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Hiển thị toast đang xử lý
     const loadingToast = toast.loading('Đang gửi đánh giá...');
     
     try {
-      // Sử dụng hook để tạo review thay vì gọi API trực tiếp
       createReview.mutate(
         {
           data: {
@@ -399,17 +389,14 @@ function RatingDialog({ bookingId, subfieldId, refetch }: { bookingId: string, s
         },
         {
           onSuccess: () => {
-            // Xóa toast loading và hiển thị toast thành công
             toast.dismiss(loadingToast);
             toast.success('Đã gửi đánh giá của bạn thành công');
             
-            // Refresh data sau khi đánh giá thành công
             refetch();
             setIsSubmitting(false);
           },
           onError: (error) => {
             console.error("Lỗi khi gửi đánh giá:", error);
-            // Xóa toast loading và hiển thị toast lỗi
             toast.dismiss(loadingToast);
             toast.error(`Không thể gửi đánh giá: ${error.message}`);
             setIsSubmitting(false);
@@ -418,7 +405,6 @@ function RatingDialog({ bookingId, subfieldId, refetch }: { bookingId: string, s
       );
     } catch (error) {
       console.error("Lỗi khi gửi đánh giá:", error);
-      // Xóa toast loading và hiển thị toast lỗi
       toast.dismiss(loadingToast);
       toast.error('Không thể gửi đánh giá. Vui lòng thử lại sau');
       setIsSubmitting(false);

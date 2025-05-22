@@ -1,8 +1,6 @@
-// Xử lí cookies 
 import { setCookie, getCookie, deleteCookie } from 'cookies-next';
 import axios from 'axios';
 
-// Định nghĩa interface cho response từ API
 interface AuthResponse {
   message: string;
   user: {
@@ -20,7 +18,6 @@ interface LoginData {
   password: string;
 }
 
-// Tạo axios instance với các cấu hình mặc định
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
@@ -28,38 +25,32 @@ const api = axios.create({
   }
 });
 
-// Lưu trữ thông tin người dùng đã đăng nhập
 export const setUserData = (userData: AuthResponse['user']) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('userData', JSON.stringify(userData));
   }
   
-  // Lưu userData vào cookie để middleware có thể đọc được
   setCookie('userData', JSON.stringify(userData), { 
     maxAge: 60 * 60 * 24 * 7, // 7 ngày
     path: '/',
   });
 };
 
-// Lấy thông tin người dùng đã lưu
 export const getUserData = (): AuthResponse['user'] | null => {
   if (typeof window !== 'undefined') {
     const data = localStorage.getItem('userData');
     return data ? JSON.parse(data) : null;
   }
   
-  // Fallback để đọc từ cookie nếu cần
   const userDataCookie = getCookie('userData');
   return userDataCookie ? JSON.parse(userDataCookie as string) : null;
 };
 
-// Lấy ID của người dùng
 export const getUserId = (): string | null => {
   const userData = getUserData();
   return userData ? userData.id : null;
 };
 
-// Xác thực bằng API - gọi để đăng nhập
 export const authenticate = async (username: string, password: string): Promise<boolean> => {
   try {
     const response = await api.post<AuthResponse>('/api/auth/login', {
@@ -67,7 +58,6 @@ export const authenticate = async (username: string, password: string): Promise<
       password
     });
 
-    // Lưu thông tin người dùng nếu đăng nhập thành công
     if (response.data && response.data.user) {
       setUserData(response.data.user);
       setAuthenticated(); // Đặt cookie xác thực
@@ -81,7 +71,6 @@ export const authenticate = async (username: string, password: string): Promise<
   }
 };
 
-// Đăng ký tài khoản mới
 export const register = async (registerData: {
   username: string;
   password: string;
@@ -107,7 +96,6 @@ export const register = async (registerData: {
   }
 };
 
-// Đặt cookie xác thực
 export const setAuthenticated = () => {
   setCookie('auth', 'true', { 
     maxAge: 60 * 60 * 24 * 7, // 7 ngày
@@ -115,24 +103,20 @@ export const setAuthenticated = () => {
   });
 };
 
-// Kiểm tra người dùng đã đăng nhập chưa
 export const isAuthenticated = () => {
   return getCookie('auth') === 'true' && getUserData() !== null;
 };
 
-// Lấy role của người dùng hiện tại
 export const getUserRole = (): 'ADMIN' | 'OWNER' | 'CUSTOMER' | null => {
   const userData = getUserData();
   return userData ? userData.role : null;
 };
 
-// Lấy username của người dùng
 export const getUsername = (): string | null => {
   const userData = getUserData();
   return userData ? userData.username : null;
 };
 
-// Đăng xuất
 export const logout = () => {
   deleteCookie('auth', { path: '/' });
   deleteCookie('userData', { path: '/' });
@@ -142,7 +126,6 @@ export const logout = () => {
   }
 };
 
-// Lấy username và password cho ZenStack API
 export const getAuthDataForZenStack = () => {
   const userData = getUserData();
   if (!userData) return null;

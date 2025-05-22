@@ -11,24 +11,19 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({ item, depth }) => {
   const [isOpen, setIsOpen] = useState(false);
   const isShowSidebar = useStoreState(state => state.appState.isShowSidebar);
 
-  // Tính toán kích thước icon dựa trên độ sâu
   const getIconSize = (depth: number) => {
-    // Menu chính: 20px, Submenu cấp 1: 16px, Submenu cấp 2+: 14px
     if (depth === 0) return 22;
     if (depth === 1) return 9;
     return 14;
   };
 
-  // Xử lý click vào mục menu
   const handleItemClick = (e: React.MouseEvent) => {
-    // Chỉ xử lý mở/đóng submenu nếu có submenu
     if (item.subMenu && item.subMenu.length > 0) {
       e.preventDefault(); // Ngăn chặn hành vi mặc định của Link
       setIsOpen(!isOpen);
     }
   };
 
-  // Tạo nội dung menu item
   const menuItemContent = (
     <div
       className={clsx(
@@ -50,7 +45,6 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({ item, depth }) => {
     </div>
   );
 
-  // Tạo menu item dựa vào loại (có submenu hay không)
   const menuItemElement = item.subMenu && item.subMenu.length > 0 ? (
     <div
       onClick={handleItemClick}

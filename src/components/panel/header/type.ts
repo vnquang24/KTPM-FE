@@ -1,4 +1,3 @@
-// components/header/types.ts
 
 export type User = {
     name: string;

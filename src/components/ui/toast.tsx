@@ -116,7 +116,6 @@ type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 
 type ToastActionElement = React.ReactElement<typeof ToastAction>
 
-// Thêm hook useToast
 type ToastOptions = {
   title?: string;
   description?: string;

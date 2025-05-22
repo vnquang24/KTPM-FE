@@ -54,10 +54,8 @@ import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-// Định nghĩa loại trạng thái đặt sân
 type BookingStatus = "pending" | "paid" | "cancel";
 
-// Component để hiển thị trạng thái đặt sân
 const BookingStatusBadge = ({ status }: { status: BookingStatus }) => {
   const statusConfig = {
     pending: { label: "Chờ xác nhận", className: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-4 w-4 mr-1" /> },
@@ -81,7 +79,6 @@ export default function BookingDetailsPage() {
   const bookingId = params.bookingId as string;
   const userId = getUserId();
   
-  // Fetch booking details
   const { data: booking, isLoading, refetch } = useFindUniqueBooking(
     {
       where: {
@@ -116,7 +113,6 @@ export default function BookingDetailsPage() {
   
   const updateBooking = useUpdateBooking();
   
-  // Cancel booking
   const cancelBooking = async () => {
     updateBooking.mutate(
       {
@@ -146,7 +142,6 @@ export default function BookingDetailsPage() {
     );
   };
   
-  // Format date and time
   const formatDateTime = (dateString: Date | string) => {
     return format(new Date(dateString), "EEEE, dd/MM/yyyy", { locale: vi });
   };
@@ -177,7 +172,6 @@ export default function BookingDetailsPage() {
     );
   }
   
-  // Check if the booking belongs to the current user
   if (booking.customUser?.account?.id !== userId) {
     return (
       <div className="flex flex-col items-center justify-center py-10">
@@ -418,7 +412,6 @@ export default function BookingDetailsPage() {
   );
 }
 
-// Dialog đánh giá sân
 function RatingDialog({ bookingId, subfieldId, refetch }: { bookingId: string, subfieldId: string, refetch: () => void }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -450,7 +443,6 @@ function RatingDialog({ bookingId, subfieldId, refetch }: { bookingId: string, s
         description: "Đã gửi đánh giá của bạn",
       });
       
-      // Refresh data
       refetch();
       setIsSubmitting(false);
     } catch (error) {

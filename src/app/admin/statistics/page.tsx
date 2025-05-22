@@ -7,7 +7,6 @@ import {
   useFindManyCustomUser,
   useFindManyOwner
 } from '@/generated/hooks';
-// Fix: Import Role from @prisma/client instead of @/generated/hooks
 import { Role } from '@prisma/client';
 import {
   Card,
@@ -42,7 +41,6 @@ import {
   Cell
 } from 'recharts';
 
-// Hàm tạo mảng dữ liệu thống kê theo tháng từ dữ liệu booking
 const generateMonthlyStats = (bookings: any[] | undefined) => {
   if (!bookings || bookings.length === 0) return [];
 
@@ -76,7 +74,6 @@ export default function StatisticsPage() {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
-  // Tính toán thời gian bắt đầu dựa trên bộ lọc thời gian
   const getDateFilter = () => {
     const now = new Date();
     
@@ -92,28 +89,24 @@ export default function StatisticsPage() {
     }
   };
 
-  // Load dữ liệu tài khoản
   const { data: accounts, isLoading: loadingAccounts } = useFindManyAccount({
     where: {
       createdAt: getDateFilter()
     }
   });
 
-  // Load dữ liệu chủ sân
   const { data: owners, isLoading: loadingOwners } = useFindManyOwner({
     where: {
       createdAt: getDateFilter()
     }
   });
 
-  // Load dữ liệu người chơi
   const { data: users, isLoading: loadingUsers } = useFindManyCustomUser({
     where: {
       createdAt: getDateFilter()
     }
   });
 
-  // Load dữ liệu sân
   const { data: fields, isLoading: loadingFields } = useFindManyField({
     where: {
       createdAt: getDateFilter()
@@ -123,7 +116,6 @@ export default function StatisticsPage() {
     }
   });
 
-  // Load dữ liệu booking
   const { data: bookings, isLoading: loadingBookings } = useFindManyBooking({
     where: {
       date: getDateFilter() // Sử dụng trường date thay vì beginTime để lọc chính xác hơn
@@ -138,11 +130,9 @@ export default function StatisticsPage() {
     }
   });
 
-  // Dữ liệu thống kê tổng quát
   const totalFields = fields?.length || 0;
   const totalSubFields = fields?.reduce((acc, field) => acc + (field.subFields?.length || 0), 0) || 0;
   const totalBookings = bookings?.length || 0;
-  // Chỉ tính doanh thu cho các đơn đặt có trạng thái là "paid"
   const totalRevenue = bookings?.reduce((sum, booking) => {
     if (booking.status && booking.status.toLowerCase() === 'paid') {
       return sum + (booking.price || 0);
@@ -152,10 +142,8 @@ export default function StatisticsPage() {
   const totalOwners = owners?.length || 0;
   const totalUsers = users?.length || 0;
 
-  // Dữ liệu thống kê theo tháng
   const monthlyData = generateMonthlyStats(bookings);
 
-  // Dữ liệu cho biểu đồ trạng thái booking
   const bookingStatusData = React.useMemo(() => {
     if (!bookings) return [];
 
@@ -179,7 +167,6 @@ export default function StatisticsPage() {
     }));
   }, [bookings]);
 
-  // Dữ liệu cho biểu đồ phân bố người dùng
   const userDistributionData = React.useMemo(() => {
     if (!accounts) return [];
 
@@ -201,7 +188,6 @@ export default function StatisticsPage() {
     }));
   }, [accounts]);
 
-  // Check loading state
   const isLoading = loadingAccounts || loadingOwners || loadingUsers || loadingFields || loadingBookings;
 
   return (
@@ -223,7 +209,6 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* Thẻ thống kê tổng quát */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="bg-blue-50">
           <CardHeader className="pb-2">
@@ -284,7 +269,6 @@ export default function StatisticsPage() {
         </Card>
       </div>
 
-      {/* Tabs biểu đồ */}
       <Tabs 
         value={activeTab} 
         onValueChange={setActiveTab} 
@@ -430,14 +414,12 @@ export default function StatisticsPage() {
                             const userId = booking.customUserId;
                             const userEntry = acc.find(entry => entry.userId === userId);
                             
-                            // Chỉ tính doanh thu cho các đơn đặt có trạng thái là "paid"
                             const bookingAmount = (booking.status && booking.status.toLowerCase() === 'paid') ? (booking.price || 0) : 0;
                             
                             if (userEntry) {
                               userEntry.bookingCount += 1;
                               userEntry.totalSpent += bookingAmount;
                             } else {
-                              // Fix: Access account through customUser's include relationship
                               const username = booking.customUser?.account?.username || 'Người dùng';
                               acc.push({
                                 userId,

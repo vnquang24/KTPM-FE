@@ -58,7 +58,6 @@ import { toast } from 'react-hot-toast';
 import { Calendar as CalendarIcon, Clock, Settings, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Setup Calendar Localizer
 const locales = {
   'vi': vi,
 };
@@ -71,7 +70,6 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-// Custom Calendar Event Type
 interface CalendarEvent {
   id: string;
   title: string;
@@ -91,7 +89,6 @@ const ScheduleManagementPage: React.FC = () => {
   const [selectedSubField, setSelectedSubField] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  // New event modal state
   const [showEventModal, setShowEventModal] = useState(false);
   const [newEvent, setNewEvent] = useState<{
     title: string;
@@ -111,11 +108,9 @@ const ScheduleManagementPage: React.FC = () => {
     reason: ''
   });
 
-  // Event details modal state
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
-  // Operating hours state
   const [operatingHours, setOperatingHours] = useState<Record<string, { start: string; end: string; enabled: boolean }>>({
     MONDAY: { start: '08:00', end: '22:00', enabled: true },
     TUESDAY: { start: '08:00', end: '22:00', enabled: true },
@@ -126,15 +121,12 @@ const ScheduleManagementPage: React.FC = () => {
     SUNDAY: { start: '08:00', end: '22:00', enabled: true },
   });
 
-  // Get user ID from auth
   const userId = getUserId();
 
-  // Debug userId
   useEffect(() => {
     console.log('userId:', userId);
   }, [userId]);
 
-  // Get owner information
   const { data: owner, isLoading: isLoadingOwner } = useFindFirstOwner({
     where: {
       account: {
@@ -146,12 +138,10 @@ const ScheduleManagementPage: React.FC = () => {
     }
   });
 
-  // Debug owner
   useEffect(() => {
     console.log('owner:', owner);
   }, [owner]);
 
-  // Get all fields for this owner
   const { data: fields, isLoading: isLoadingFields } = useFindManyField({
     where: {
       ownerId: owner?.id,
@@ -163,13 +153,11 @@ const ScheduleManagementPage: React.FC = () => {
     enabled: !!owner?.id,
   });
 
-  // Debug fields
   useEffect(() => {
     console.log('fields:', fields);
     console.log('ownerId:', owner?.id);
   }, [fields, owner?.id]);
 
-  // Get opening hours for selected field
   const { data: openingHoursData, isLoading: isLoadingOpeningHours, refetch: refetchOpeningHours } = useFindManyOpeningHours({
     where: {
       fieldId: selectedField || '',
@@ -178,7 +166,6 @@ const ScheduleManagementPage: React.FC = () => {
     enabled: !!selectedField
   });
 
-  // Get maintenance schedules for selected field/subfield
   const { data: maintenanceSchedules, isLoading: isLoadingMaintenance, refetch: refetchMaintenanceSchedules } = useFindManyMaintenanceSchedule({
     where: {
       subfield: {
@@ -190,7 +177,6 @@ const ScheduleManagementPage: React.FC = () => {
     enabled: !!selectedField
   });
 
-  // Get bookings for selected field/subfield
   const { data: bookings, isLoading: isLoadingBookings } = useFindManyBooking({
     where: {
       subfield: {
@@ -205,7 +191,6 @@ const ScheduleManagementPage: React.FC = () => {
     enabled: !!selectedField
   });
 
-  // Mutations for CRUD operations
   const createOpeningHours = useCreateOpeningHours();
   const updateOpeningHours = useUpdateOpeningHours();
   const deleteOpeningHours = useDeleteOpeningHours();
@@ -216,14 +201,12 @@ const ScheduleManagementPage: React.FC = () => {
 
   const updateSubField = useUpdateSubField();
 
-  // Get all subfields for the selected field
   const subFields = useMemo(() => {
     if (!fields || !selectedField) return [];
     const field = fields.find(f => f.id === selectedField);
     return field?.subFields || [];
   }, [fields, selectedField]);
 
-  // Handle selecting a slot in the calendar
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     if (!selectedField) {
       toast.error('Vui lòng chọn một sân trước khi tạo lịch');
@@ -239,13 +222,11 @@ const ScheduleManagementPage: React.FC = () => {
     setShowEventModal(true);
   };
 
-  // Handle clicking an event in the calendar
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event);
     setShowEventDetails(true);
   };
 
-  // Handle creating a new event
   const handleCreateEvent = async () => {
     if (!newEvent.title || !newEvent.resourceId) {
       toast.error('Vui lòng điền đầy đủ thông tin');
@@ -254,7 +235,6 @@ const ScheduleManagementPage: React.FC = () => {
 
     try {
       if (newEvent.type === 'maintenance') {
-        // Tạo lịch bảo trì mới
         await createMaintenanceSchedule.mutateAsync({
           data: {
             startDate: newEvent.start,
@@ -267,7 +247,6 @@ const ScheduleManagementPage: React.FC = () => {
           }
         });
 
-        // Cập nhật trạng thái sân thành "MAINTENANCE"
         await updateSubField.mutateAsync({
           where: { id: newEvent.resourceId },
           data: { status: 'MAINTENANCE' }
@@ -292,23 +271,19 @@ const ScheduleManagementPage: React.FC = () => {
     }
   };
 
-  // Handle deleting an event
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
 
     try {
       if (selectedEvent.type === 'maintenance') {
-        // Xóa lịch bảo trì
         await deleteMaintenanceSchedule.mutateAsync({
           where: { id: selectedEvent.id }
         });
 
-        // Kiểm tra xem có lịch bảo trì nào khác cho sân con này không
         const otherMaintenances = maintenanceSchedules?.filter(
           m => m.id !== selectedEvent.id && m.subfieldId === selectedEvent.resourceId
         );
 
-        // Nếu không còn lịch bảo trì nào khác, cập nhật trạng thái sân về AVAILABLE
         if (!otherMaintenances || otherMaintenances.length === 0) {
           await updateSubField.mutateAsync({
             where: { id: selectedEvent.resourceId },
@@ -327,7 +302,6 @@ const ScheduleManagementPage: React.FC = () => {
     }
   };
 
-  // Update operating hours for all days
   const handleUpdateOperatingHours = async () => {
     if (!selectedField) {
       toast.error('Vui lòng chọn một sân trước khi cập nhật giờ mở cửa');
@@ -335,15 +309,12 @@ const ScheduleManagementPage: React.FC = () => {
     }
 
     try {
-      // Lấy danh sách giờ mở cửa hiện tại
       const existingOpeningHours = openingHoursData || [];
 
-      // Cập nhật hoặc tạo mới giờ mở cửa cho từng ngày
       for (const [day, hours] of Object.entries(operatingHours)) {
         const existingDay = existingOpeningHours.find(oh => oh.dayOfWeek === day);
 
         if (existingDay) {
-          // Cập nhật nếu đã tồn tại
           await updateOpeningHours.mutateAsync({
             where: { id: existingDay.id },
             data: {
@@ -353,7 +324,6 @@ const ScheduleManagementPage: React.FC = () => {
             }
           });
         } else {
-          // Tạo mới nếu chưa tồn tại
           await createOpeningHours.mutateAsync({
             data: {
               dayOfWeek: day as any,
@@ -376,7 +346,6 @@ const ScheduleManagementPage: React.FC = () => {
     }
   };
 
-  // Event styling based on type and status
   const eventStyleGetter = (event: CalendarEvent) => {
     let style: React.CSSProperties = {
       borderRadius: '4px',
@@ -397,7 +366,6 @@ const ScheduleManagementPage: React.FC = () => {
     return { style };
   };
 
-  // Custom Calendar Toolbar
   const CustomToolbar = ({ label, onView, onNavigate }: any) => {
     return (
       <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
@@ -443,7 +411,6 @@ const ScheduleManagementPage: React.FC = () => {
       </div>
     );
   };
-  // Cập nhật operating hours state từ dữ liệu thực tế
   useEffect(() => {
     if (openingHoursData && openingHoursData.length > 0) {
       const newOperatingHours = { ...operatingHours };
@@ -460,7 +427,6 @@ const ScheduleManagementPage: React.FC = () => {
     }
   }, [openingHoursData]);
 
-  // Tạo events từ dữ liệu API
   useEffect(() => {
     if (!selectedField) {
       setEvents([]);
@@ -469,16 +435,13 @@ const ScheduleManagementPage: React.FC = () => {
 
     const allEvents: CalendarEvent[] = [];
 
-    // Thêm giờ mở cửa
     if (openingHoursData && openingHoursData.length > 0) {
-      // Tạo events cho 7 ngày tới
       for (let i = 0; i < 7; i++) {
         const currentDate = addDays(new Date(), i);
         const dayOfWeek = format(currentDate, 'EEEE').toUpperCase() as keyof typeof operatingHours;
         const daySettings = operatingHours[dayOfWeek];
 
         if (daySettings?.enabled) {
-          // Parse thời gian bắt đầu và kết thúc
           const [startHour, startMinute] = daySettings.start.split(':').map(Number);
           const [endHour, endMinute] = daySettings.end.split(':').map(Number);
 
@@ -488,7 +451,6 @@ const ScheduleManagementPage: React.FC = () => {
           const endDate = new Date(currentDate);
           endDate.setHours(endHour, endMinute, 0);
 
-          // Nếu có subfield được chọn, chỉ hiển thị cho subfield đó
           if (subFields.length > 0) {
             subFields.forEach(subField => {
               if (!selectedSubField || selectedSubField === subField.id) {
@@ -518,7 +480,6 @@ const ScheduleManagementPage: React.FC = () => {
       }
     }
 
-    // Thêm lịch bảo trì
     if (maintenanceSchedules && maintenanceSchedules.length > 0) {
       maintenanceSchedules.forEach(maintenance => {
         if (!selectedSubField || selectedSubField === maintenance.subfieldId) {
@@ -536,7 +497,6 @@ const ScheduleManagementPage: React.FC = () => {
       });
     }
 
-    // Thêm lịch đặt sân
     if (bookings && bookings.length > 0) {
       bookings.forEach(booking => {
         if (!selectedSubField || selectedSubField === booking.subfieldId) {
@@ -832,7 +792,6 @@ const ScheduleManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* New Event Modal */}
       <Dialog open={showEventModal} onOpenChange={setShowEventModal}>
         <DialogContent>
           <DialogHeader>
@@ -936,7 +895,6 @@ const ScheduleManagementPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Event Details Modal */}
       <Dialog open={showEventDetails} onOpenChange={setShowEventDetails}>
         <DialogContent>
           <DialogHeader>

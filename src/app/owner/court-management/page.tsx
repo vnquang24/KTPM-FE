@@ -47,7 +47,6 @@ import { Plus, Edit, Trash2, LandPlot } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const CourtManagementPage: React.FC = () => {
-  // State for field management
   const [selectedField, setSelectedField] = useState<any>(null);
   const [newField, setNewField] = useState({
     location: '',
@@ -56,10 +55,8 @@ const CourtManagementPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  // Get user ID from auth
   const userId = getUserId();
   
-  // Get owner information
   const { data: owner } = useFindFirstOwner({
     where: {
       account: {
@@ -68,7 +65,6 @@ const CourtManagementPage: React.FC = () => {
     }
   });
   
-  // Get all fields for this owner
   const { data: fields, refetch: refetchFields } = useFindManyField({
     where: {
       ownerId: owner?.id,
@@ -80,12 +76,10 @@ const CourtManagementPage: React.FC = () => {
     enabled: !!owner?.id,
   });
   
-  // Mutations for field operations
   const createField = useCreateField();
   const updateField = useUpdateField();
   const deleteField = useDeleteField();
 
-  // Handle create field
   const handleCreateField = async () => {
     if (!owner) return;
     
@@ -109,7 +103,6 @@ const CourtManagementPage: React.FC = () => {
     }
   };
 
-  // Handle update field
   const handleUpdateField = async () => {
     if (!selectedField) return;
     
@@ -130,7 +123,6 @@ const CourtManagementPage: React.FC = () => {
     }
   };
 
-  // Handle delete field
   const handleDeleteField = async (fieldId: string) => {
     try {
       await deleteField.mutateAsync({
@@ -144,7 +136,6 @@ const CourtManagementPage: React.FC = () => {
     }
   };
 
-  // Navigate to subfield management
   const router = useRouter();
   const navigateToSubfields = (fieldId: string) => {
     router.push(`/owner/court-management/sub-fields/${fieldId}`);
@@ -195,7 +186,6 @@ const CourtManagementPage: React.FC = () => {
         </Dialog>
       </div>
 
-      {/* Fields List */}
       {fields && fields.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {fields.map((field) => (

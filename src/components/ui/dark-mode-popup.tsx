@@ -24,7 +24,6 @@ const DarkModePopup: React.FC<DarkModePopupProps> = ({ onClose }) => {
           </button>
           <button
             onClick={() => {
-              // Cố gắng mở hướng dẫn tắt dark mode
               window.open('https://support.google.com/chrome/answer/9275525?hl=vi', '_blank');
             }}
             className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"

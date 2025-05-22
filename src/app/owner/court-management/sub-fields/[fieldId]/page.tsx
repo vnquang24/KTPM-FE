@@ -59,7 +59,6 @@ const SubFieldManagementPage: React.FC = () => {
   const fieldId = params.fieldId as string;
   const router = useRouter();
 
-  // States for subfield management
   const [selectedSubField, setSelectedSubField] = useState<any>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -72,7 +71,6 @@ const SubFieldManagementPage: React.FC = () => {
     unitOfTime: 'HOUR',
   });
 
-  // Fetch the field and its subfields
   const { data: field } = useFindUniqueField({
     where: { id: fieldId },
   });
@@ -82,12 +80,10 @@ const SubFieldManagementPage: React.FC = () => {
     orderBy: { createdAt: 'desc' },
   });
 
-  // Mutations for subfield operations
   const createSubField = useCreateSubField();
   const updateSubField = useUpdateSubField();
   const deleteSubField = useDeleteSubField();
 
-  // Handle create subfield
   const handleCreateSubField = async () => {
     try {
       await createSubField.mutateAsync({
@@ -121,7 +117,6 @@ const SubFieldManagementPage: React.FC = () => {
     }
   };
 
-  // Handle update subfield
   const handleUpdateSubField = async () => {
     if (!selectedSubField) return;
 
@@ -146,7 +141,6 @@ const SubFieldManagementPage: React.FC = () => {
     }
   };
 
-  // Handle delete subfield
   const handleDeleteSubField = async (subFieldId: string) => {
     try {
       await deleteSubField.mutateAsync({
@@ -160,7 +154,6 @@ const SubFieldManagementPage: React.FC = () => {
     }
   };
 
-  // Get status badge color
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'AVAILABLE':
@@ -297,7 +290,6 @@ const SubFieldManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* SubFields List */}
       {subFields && subFields.length > 0 ? (
         <div className="rounded-md border">
           <Table>

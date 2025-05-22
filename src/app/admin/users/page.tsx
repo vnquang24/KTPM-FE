@@ -65,13 +65,10 @@ export default function UsersPage() {
     phone: '',
     password: '',
     role: Role.CUSTOMER as Role,
-    // Thông tin bổ sung cho Customer
     customerDescription: '',
-    // Thông tin bổ sung cho Owner
     ownerRanking: ''
   });
 
-  // Load accounts with relations (chỉ hiển thị các tài khoản chưa bị xóa mềm)
   const { data: accounts, isLoading, refetch } = useFindManyAccount({
     include: {
       customUser: true,
@@ -89,7 +86,6 @@ export default function UsersPage() {
     orderBy: { createdAt: 'desc' }
   });
   
-  // Load tất cả tài khoản (bao gồm cả đã bị xóa mềm) để kiểm tra tính độc nhất
   const { data: allAccounts } = useFindManyAccount({
     select: {
       id: true,
@@ -98,7 +94,6 @@ export default function UsersPage() {
       deleted: true
     }
   });
- // Xóa tài khoản chỉ là update trường deleted
   const updateAccount = useUpdateAccount({
     onSuccess: () => {
       toast.success('Cập nhật người dùng thành công');
@@ -110,21 +105,18 @@ export default function UsersPage() {
     }
   });
 
-  // Mutation để tạo CustomUser
   const createCustomUser = useCreateCustomUser({
     onError: (error) => {
       toast.error(`Lỗi tạo thông tin khách hàng: ${error.message}`);
     }
   });
 
-  // Mutation để tạo Owner
   const createOwner = useCreateOwner({
     onError: (error) => {
       toast.error(`Lỗi tạo thông tin chủ sân: ${error.message}`);
     }
   });
 
-  // Reset form thêm người dùng mới
   const resetNewUserForm = () => {
     setNewUser({
       username: '',
@@ -151,24 +143,20 @@ export default function UsersPage() {
     });
   };
 
-  // Hàm tạo tên người dùng duy nhất dựa trên thời gian hiện tại
   const generateUniqueUsername = (baseUsername: string) => {
     const timestamp = new Date().getTime();
     const randomSuffix = Math.floor(Math.random() * 1000);
     return `${baseUsername}_${timestamp}_${randomSuffix}`;
   };
   
-  // Kiểm tra tính độc nhất của email và số điện thoại dựa trên dữ liệu đã tải về
   const checkUserUniqueness = () => {
     let isValid = true;
     setEmailError(null);
     setPhoneError(null);
     
-    // Kiểm tra email nếu có
     if (newUser.email && allAccounts) {
       setIsCheckingEmail(true);
       
-      // Tìm kiếm trong tất cả tài khoản (bao gồm cả đã bị xóa mềm)
       const existingEmail = allAccounts.find(account => 
         account.email?.toLowerCase() === newUser.email.toLowerCase()
       );
@@ -205,7 +193,6 @@ export default function UsersPage() {
       return;
     }
 
-    // Kiểm tra thông tin bổ sung cho từng vai trò
     if (newUser.role === Role.CUSTOMER && !newUser.customerDescription) {
       toast.error('Vui lòng nhập mô tả cho khách hàng');
       return;
@@ -224,7 +211,6 @@ export default function UsersPage() {
       const baseUsername = newUser.username.trim() || 'user';
       const uniqueUsername = generateUniqueUsername(baseUsername);
       
-      // Chuẩn bị dữ liệu để gửi đến API register
       const registerData = {
         username: uniqueUsername,
         password: newUser.password,
@@ -234,7 +220,6 @@ export default function UsersPage() {
         dateOfBirth: new Date().toISOString().split('T')[0] // Mặc định là ngày hiện tại
       };
 
-      // Gọi API đăng ký
       const response = await axios.post(
         'http://bektpm-production.up.railway.app/api/auth/register',
         registerData
@@ -248,7 +233,6 @@ export default function UsersPage() {
 
       const newAccountId = response.data.user.id;
 
-      // Tạo thông tin bổ sung dựa trên vai trò
       if (newUser.role === Role.CUSTOMER) {
         await createCustomUser.mutateAsync({
           data: {
@@ -433,7 +417,6 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* Dialog chỉnh sửa người dùng */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent>
           <DialogHeader>
@@ -497,7 +480,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog thêm người dùng mới */}
       <Dialog open={isAdding} onOpenChange={setIsAdding}>
         <DialogContent>
           <DialogHeader>
@@ -594,7 +576,6 @@ export default function UsersPage() {
               </Select>
             </div>
 
-            {/* Thông tin bổ sung cho Customer */}
             {newUser.role === Role.CUSTOMER && (
               <div className="space-y-2 pt-2 border-t border-gray-200">
                 <label htmlFor="customer-description" className="font-medium">Mô tả khách hàng <span className="text-red-500">*</span></label>
@@ -611,7 +592,6 @@ export default function UsersPage() {
               </div>
             )}
 
-            {/* Thông tin bổ sung cho Owner */}
             {newUser.role === Role.OWNER && (
               <div className="space-y-2 pt-2 border-t border-gray-200">
                 <label htmlFor="owner-ranking" className="font-medium">Xếp hạng chủ sân</label>

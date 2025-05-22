@@ -57,7 +57,6 @@ export default function ReviewsPage() {
       }
     }
   });
-  // Lấy danh sách các sân của owner
   const { data: ownerFields, isLoading: isLoadingFields } = useFindManyField({
     where: {
       ownerId: owner?.id
@@ -67,7 +66,6 @@ export default function ReviewsPage() {
     }
   })
 
-  // Lấy tất cả reviews từ các sân của owner
   const { data: reviews, isLoading: isLoadingReviews } = useFindManyReview({
     where: {
       booking: {
@@ -100,7 +98,6 @@ export default function ReviewsPage() {
     }
   })
 
-  // Xử lý thống kê dữ liệu
   const ratingDistribution = [0, 0, 0, 0, 0] // Đếm số lượng ratings 1-5 sao
   const fieldRatings: Record<string, {count: number, sum: number, name: string}> = {}
 
