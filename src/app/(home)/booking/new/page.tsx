@@ -12,7 +12,6 @@ import axios from "axios";
 import image6 from "../../../../../public/6.jpg"
 import qr from "../../../../../public/qr.jpg"
 type PaymentMethod = "BANKING" | "CASH" | "MOMO" | "ZALOPAY";
-const saltRounds = 10;
 
 const BookingForm = () => {
   const searchParams = useSearchParams();
@@ -203,14 +202,12 @@ const BookingForm = () => {
 
       if (loggedIn && loggedInCustomUser) {
         customUserId = loggedInCustomUser.id;
-        console.log("Sử dụng customUser đã đăng nhập:", customUserId);
       }
       else {
         const uniqueUsername = generateUniqueUsername(email || '', phone.trim());
 
         const randomPassword = Math.random().toString(36).slice(-8);
 
-        console.log("Đang tạo tài khoản mới với username:", uniqueUsername);
 
         const registerData = {
           username: uniqueUsername,
@@ -222,14 +219,12 @@ const BookingForm = () => {
           dateOfBirth: new Date().toISOString().split('T')[0] // Mặc định là ngày hiện tại, format YYYY-MM-DD
         };
 
-        console.log("Gửi dữ liệu đăng ký:", registerData);
 
         const registerResponse = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
           registerData
         );
 
-        console.log("Phản hồi đăng ký:", registerResponse.data);
 
         if (!registerResponse.data || !registerResponse.data.user || !registerResponse.data.user.id) {
           setBookingError("Không thể tạo tài khoản. Vui lòng thử lại sau.");
@@ -238,14 +233,12 @@ const BookingForm = () => {
         }
 
         const newAccount = registerResponse.data.user;
-        console.log("Tạo tài khoản thành công, ID:", newAccount.id);
 
         setNewAccountInfo({
           username: uniqueUsername,
           password: randomPassword
         });
 
-        console.log("Đang tạo customUser cho tài khoản");
         const newCustomUser = await createCustomUserMutation.mutateAsync({
           data: {
             description: `Khách hàng tự động tạo từ đặt sân`,
@@ -261,11 +254,9 @@ const BookingForm = () => {
           return;
         }
 
-        console.log("Tạo customUser thành công:", newCustomUser);
         customUserId = newCustomUser.id;
       }
 
-      console.log("Đang chuẩn bị dữ liệu đặt sân");
       const bookingDate = new Date(dateParam);
       const [startHour, startMinute] = startTimeParam.split(':').map(Number);
       const [endHour, endMinute] = endTimeParam.split(':').map(Number);
@@ -293,7 +284,7 @@ Ghi chú: ${note ? note.trim() : "Không có"}
         date: bookingDate,
         beginTime: beginTime,
         endTime: endTime,
-        status: "PENDING",
+        status: "pending",
         description: bookingDescription.trim(),
         paymentMethod: paymentMethod,
         price: totalCost,
@@ -301,7 +292,6 @@ Ghi chú: ${note ? note.trim() : "Không có"}
         customUserId: customUserId
       };
 
-      console.log("Dữ liệu booking cuối cùng:", bookingData);
 
       const newBooking = await createBookingMutation.mutateAsync({
         data: bookingData
@@ -600,7 +590,7 @@ Ghi chú: ${note ? note.trim() : "Không có"}
               </div>
               <div>
                 <p className="text-gray-600 text-sm mb-1">Sân</p>
-                <p className="font-semibold">{subfield.field.description}</p>
+                <p className="font-semibold">{subfield.field.location}</p>
               </div>
               <div>
                 <p className="text-gray-600 text-sm mb-1">Loại sân</p>

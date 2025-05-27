@@ -282,7 +282,7 @@ export default function RatingPage() {
               {pendingReviewsData.map((booking) => (
                 <Card key={booking.id}>
                   <CardHeader>
-                    <CardTitle className="text-lg">{booking.subfield?.field?.description || "Không có tên"}</CardTitle>
+                    <CardTitle className="text-lg">{booking.subfield?.field?.location || "Không có tên"}</CardTitle>
                     <CardDescription>{booking.subfield?.subfieldDescription}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -293,7 +293,7 @@ export default function RatingPage() {
                       </div>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button className="w-full mt-4">
+                          <Button className="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-black">
                             <Star className="h-4 w-4 mr-2" />
                             Đánh giá ngay
                           </Button>

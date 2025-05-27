@@ -558,6 +558,7 @@ const BookingManagementPage: React.FC = () => {
                         <TableHead>Ngày</TableHead>
                         <TableHead>Thời gian</TableHead>
                         <TableHead>Giá (VNĐ)</TableHead>
+                        <TableHead>Ghi chú</TableHead>
                         <TableHead className="text-center">Trạng thái</TableHead>
                         <TableHead className="text-center">Thao tác</TableHead>
                       </TableRow>
@@ -579,6 +580,26 @@ const BookingManagementPage: React.FC = () => {
                               {format(new Date(booking.beginTime), 'HH:mm')} - {format(new Date(booking.endTime), 'HH:mm')}
                             </TableCell>
                             <TableCell>{new Intl.NumberFormat('vi-VN').format(booking.price)}</TableCell>
+                            <TableCell>
+                              {(() => {
+                                if (!booking.description) return 'Không có';
+                                
+                                // Parse description để tách ra thông tin ghi chú
+                                const lines = booking.description.split('\n').filter((line: string) => line.trim());
+                                const noteLineIndex = lines.findIndex((line: string) => line.startsWith('Ghi chú:'));
+                                
+                                if (noteLineIndex !== -1) {
+                                  const noteLine = lines[noteLineIndex];
+                                  const noteContent = noteLine.replace('Ghi chú:', '').trim();
+                                  
+                                  if (noteContent && noteContent !== 'Không có') {
+                                    return noteContent.length > 30 ? `${noteContent.substring(0, 30)}...` : noteContent;
+                                  }
+                                }
+                                
+                                return 'Không có';
+                              })()}
+                            </TableCell>
                             <TableCell className="text-center">
                               <Badge 
                                 className={`${getStatusBadgeColor(mapDatabaseToUIStatus(booking.status))}`}
@@ -626,7 +647,7 @@ const BookingManagementPage: React.FC = () => {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-10">
+                          <TableCell colSpan={9} className="text-center py-10">
                             <div className="flex flex-col items-center justify-center">
                               <CalendarIcon className="h-10 w-10 text-gray-400 mb-2" />
                               <p className="text-lg font-medium text-gray-900">Không có đơn đặt sân nào</p>
@@ -706,102 +727,274 @@ const BookingManagementPage: React.FC = () => {
       </div>
 
       <Dialog open={showBookingDetail} onOpenChange={setShowBookingDetail}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết đặt sân</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Chi tiết đặt sân</DialogTitle>
             <DialogDescription>
-              Thông tin chi tiết về đơn đặt sân
+              Thông tin chi tiết về đơn đặt sân #{selectedBooking?.id?.substring(0, 8)}
             </DialogDescription>
           </DialogHeader>
           
           {selectedBooking && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Thông tin khách hàng</h3>
-                  <div className="mt-2 border rounded-md p-4">
-                    <p><span className="font-medium">Tên:</span> {selectedBooking.customUser?.account?.username}</p>
-                    <p><span className="font-medium">Email:</span> {selectedBooking.customUser?.account?.email || 'Không có'}</p>
-                    <p><span className="font-medium">SĐT:</span> {selectedBooking.customUser?.account?.phone || 'Không có'}</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Thông tin sân</h3>
-                  <div className="mt-2 border rounded-md p-4">
-                    <p><span className="font-medium">Sân:</span> {selectedBooking.subfield?.field?.location}</p>
-                    {selectedBooking.subfield?.subfieldDescription ? (
-                      <p><span className="font-medium">Mô tả sân:</span> {selectedBooking.subfield?.subfieldDescription}</p>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Thông tin đặt sân</h3>
-                  <div className="mt-2 border rounded-md p-4">
-                    <p><span className="font-medium">Mã đặt sân:</span> {selectedBooking.id.substring(0, 8)}</p>
-                    <p>
-                      <span className="font-medium">Ngày:</span> {format(new Date(selectedBooking.date), 'dd/MM/yyyy', { locale: vi })}
-                    </p>
-                    <p>
-                      <span className="font-medium">Thời gian:</span> {format(new Date(selectedBooking.beginTime), 'HH:mm')} - {format(new Date(selectedBooking.endTime), 'HH:mm')}
-                    </p>
-                    <p>
-                      <span className="font-medium">Giá thuê:</span> {new Intl.NumberFormat('vi-VN').format(selectedBooking.price)} VNĐ
-                    </p>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium">Trạng thái:</span>
-                      <Badge className={getStatusBadgeColor(selectedBooking.status)}>
-                        {getStatusLabel(selectedBooking.status)}
-                      </Badge>
-                    </div>
-                    <p>
-                      <span className="font-medium">Thanh toán:</span>{' '}
-                      {selectedBooking.payDate ? (
-                        <>
-                          Đã thanh toán vào {format(new Date(selectedBooking.payDate), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                          {selectedBooking.paymentMethod && (
-                            <> qua {selectedBooking.paymentMethod}</>
-                          )}
-                        </>
-                      ) : 'Chưa thanh toán'}
-                    </p>
-                    <p>
-                      <span className="font-medium">Đánh giá:</span>{' '}
-                      {selectedBooking.review ? (
-                        <>
-                          {selectedBooking.review.rating}/5 sao - {selectedBooking.review.text || 'Không có nhận xét'}
-                        </>
-                      ) : 'Chưa đánh giá'}
-                    </p>
-                  </div>
+            <div className="space-y-6 py-4">
+              {/* Header với trạng thái và các action */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Badge className={`${getStatusBadgeColor(mapDatabaseToUIStatus(selectedBooking.status))} text-sm px-3 py-1`}>
+                    {getStatusLabel(mapDatabaseToUIStatus(selectedBooking.status))}
+                  </Badge>
+                  <span className="text-sm text-gray-600">
+                    Đặt vào {format(new Date(selectedBooking.createdAt || selectedBooking.date), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                  </span>
                 </div>
                 
                 {getAvailableActions(selectedBooking).length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Thao tác</h3>
-                    <div className="mt-2 flex gap-2">
-                      {getAvailableActions(selectedBooking).map((action, index) => (
-                        <Button 
-                          key={index}
-                          onClick={() => {
-                            handleUpdateStatus(selectedBooking.id, action.action as string);
-                            setShowBookingDetail(false);
-                          }}
-                          className="flex items-center"
-                        >
-                          {action.icon}
-                          {action.label}
-                        </Button>
-                      ))}
-                    </div>
+                  <div className="flex gap-2">
+                    {getAvailableActions(selectedBooking).map((action, index) => (
+                      <Button 
+                        key={index}
+                        size="sm"
+                        onClick={() => {
+                          handleUpdateStatus(selectedBooking.id, action.action as string);
+                          setShowBookingDetail(false);
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        {action.icon}
+                        {action.label}
+                      </Button>
+                    ))}
                   </div>
                 )}
               </div>
+
+              {/* Thông tin chính */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Cột trái */}
+                <div className="space-y-6">
+                  {/* Thông tin khách hàng */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <UserCheck className="h-5 w-5 text-blue-600" />
+                        Thông tin khách hàng
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Tên khách hàng:</span>
+                        <span className="font-semibold">{selectedBooking.customUser?.account?.username}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Email:</span>
+                        <span className="font-medium">{selectedBooking.customUser?.account?.email || 'Không có'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Số điện thoại:</span>
+                        <span className="font-medium">{selectedBooking.customUser?.account?.phone || 'Không có'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Thông tin sân */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <CalendarIcon className="h-5 w-5 text-green-600" />
+                        Thông tin sân
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Tên sân:</span>
+                        <span className="font-semibold">{selectedBooking.subfield?.field?.location}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Loại sân:</span>
+                        <span className="font-medium">{selectedBooking.subfield?.subfieldDescription || 'Sân tiêu chuẩn'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Đơn vị tính:</span>
+                        <span className="font-medium">{selectedBooking.subfield?.unitOfTime || 'Giờ'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Ghi chú */}
+                  {selectedBooking.description && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-purple-600" />
+                          Ghi chú từ khách hàng
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          {(() => {
+                            // Parse description để tách ra thông tin ghi chú
+                            const lines = selectedBooking.description.split('\n').filter((line: string) => line.trim());
+                            const noteLineIndex = lines.findIndex((line: string) => line.startsWith('Ghi chú:'));
+                            
+                            if (noteLineIndex !== -1) {
+                              const noteLine = lines[noteLineIndex];
+                              const noteContent = noteLine.replace('Ghi chú:', '').trim();
+                              
+                              if (noteContent && noteContent !== 'Không có') {
+                                return (
+                                  <div>
+                                    <p className="text-gray-700 font-medium mb-2">Yêu cầu đặc biệt:</p>
+                                    <p className="text-gray-700 italic">{noteContent}</p>
+                                  </div>
+                                );
+                              }
+                            }
+                            
+                            return (
+                              <div>
+                                <p className="text-gray-700 font-medium mb-2">Thông tin đặt sân:</p>
+                                <pre className="text-gray-700 whitespace-pre-wrap text-sm">{selectedBooking.description}</pre>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Cột phải */}
+                <div className="space-y-6">
+                  {/* Thông tin đặt sân */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <ClipboardList className="h-5 w-5 text-orange-600" />
+                        Thông tin đặt sân
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Mã đặt sân:</span>
+                        <span className="font-mono font-semibold bg-gray-100 px-2 py-1 rounded">
+                          {selectedBooking.id.substring(0, 8)}...
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Ngày đặt:</span>
+                        <span className="font-semibold text-blue-600">
+                          {format(new Date(selectedBooking.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Thời gian:</span>
+                        <span className="font-semibold">
+                          {format(new Date(selectedBooking.beginTime), 'HH:mm')} - {format(new Date(selectedBooking.endTime), 'HH:mm')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Thời lượng:</span>
+                        <span className="font-medium">
+                          {(() => {
+                            const start = new Date(selectedBooking.beginTime);
+                            const end = new Date(selectedBooking.endTime);
+                            const diffInMs = end.getTime() - start.getTime();
+                            const diffInHours = diffInMs / (1000 * 60 * 60);
+                            return `${diffInHours} giờ`;
+                          })()}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Thông tin thanh toán */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                        Thông tin thanh toán
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Tổng tiền:</span>
+                        <span className="font-bold text-xl text-emerald-600">
+                          {new Intl.NumberFormat('vi-VN').format(selectedBooking.price)} VNĐ
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Phương thức:</span>
+                        <span className="font-medium">
+                          {selectedBooking.paymentMethod ? (
+                            selectedBooking.paymentMethod === 'BANKING' ? 'Chuyển khoản' :
+                            selectedBooking.paymentMethod === 'CASH' ? 'Tiền mặt' :
+                            selectedBooking.paymentMethod === 'MOMO' ? 'Ví Momo' :
+                            selectedBooking.paymentMethod === 'ZALOPAY' ? 'ZaloPay' : selectedBooking.paymentMethod
+                          ) : 'Chưa xác định'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Thời gian thanh toán:</span>
+                        <span className="font-medium">
+                          {selectedBooking.payDate ? 
+                            format(new Date(selectedBooking.payDate), 'dd/MM/yyyy HH:mm', { locale: vi }) : 
+                            'Chưa thanh toán'
+                          }
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Đánh giá */}
+                  {selectedBooking.review && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                          Đánh giá
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <svg
+                                key={star}
+                                className={`w-5 h-5 ${star <= selectedBooking.review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            ))}
+                          </div>
+                          <span className="font-semibold">{selectedBooking.review.rating}/5</span>
+                        </div>
+                        {selectedBooking.review.text && (
+                          <div className="bg-yellow-50 p-4 rounded-lg">
+                            <p className="text-gray-700">{selectedBooking.review.text}</p>
+                          </div>
+                        )}
+                        <div className="text-sm text-gray-500">
+                          Đánh giá vào {format(new Date(selectedBooking.review.date), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
             </div>
           )}
+          
+          <DialogFooter className="pt-4 border-t">
+            <Button variant="outline" onClick={() => setShowBookingDetail(false)}>
+              Đóng
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

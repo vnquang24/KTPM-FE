@@ -14,7 +14,8 @@ import {
   LayoutDashboard,
   Clock,
   CheckSquare,
-  BarChart2
+  BarChart2,
+  Building2
 } from 'lucide-react';
 import { MenuItem } from '@/components/panel/menu-item/type';
 
@@ -43,7 +44,7 @@ export const ownerMenuItems: MenuItem[] = [
     pathname: '/owner/court-stats',
   },
   {
-    icon: LayoutDashboard,
+    icon: Building2,
     label: 'Quản lý sân',
     pathname: '/owner/court-management',
   },
@@ -81,4 +82,4 @@ export const menuItems = {
   admin: adminMenuItems,
   owner: ownerMenuItems,
   customer: customerMenuItems
-};
+}; 

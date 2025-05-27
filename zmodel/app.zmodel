@@ -58,7 +58,7 @@ model Booking extends Base {
   price          Float
   payDate        DateTime?
   paymentMethod  String?
-  status         String     // 'pending', 'paid', 'cancel'
+  status         String     // 'PENDING', 'PAID', 'CANCEL'
   
   customUserId   String
   customUser     CustomUser    @relation(fields: [customUserId], references: [id])

@@ -29,7 +29,7 @@ const stringToSlug = (str: string) => {
     const from =
             'àáãảạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđùúủũụưừứửữựòóỏõọôồốổỗộơờớởỡợìíỉĩịäëïîöüûñçýỳỹỵỷ',
         to =
-            'aaaaaaaaaaaaaaaaaeeeeeeeeeeeduuuuuuuuuuuoooooooooooooooooiiiiiaeiiouuncyyyyy'
+            'aaaaaaaaaaaaaaaaaeeeeeeeeeeeduuuuuuuuuuuoooooooooooooooooooooiiiiiaeiiouuncyyyyy'
     for (let i = 0, l = from.length; i < l; i++) {
         str = str.replace(RegExp(from[i], 'gi'), to[i])
     }
@@ -153,6 +153,63 @@ const findMapCenter = (
         latitude: sumLat / master.length,
         longitude: sumLon / master.length,
     }
+}
+
+/**
+ * Tìm label phù hợp cho header dựa trên pathname và role của user
+ */
+export function findMenuLabel(path: string, role: 'ADMIN' | 'OWNER' | 'CUSTOMER'): string {
+  const { menuItems } = require('@/lib/menu-data');
+  
+  // Lấy menu items dựa trên role
+  const currentMenuItems = role === 'ADMIN' ? menuItems.admin : 
+                           role === 'OWNER' ? menuItems.owner : 
+                           menuItems.customer;
+
+  // Tìm trong static routes trước
+  const mainItem = currentMenuItems.find((item: any) => item.pathname === path);
+  if (mainItem) return mainItem.label;
+
+  for (const item of currentMenuItems) {
+    if (item.subMenu) {
+      const subItem = item.subMenu.find((sub: any) => sub.pathname === path);
+      if (subItem) return subItem.label;
+    }
+  }
+
+  // Xử lý dynamic routes chung
+  if (path.includes('/booking-details/')) {
+    return 'Chi tiết đặt sân';
+  }
+  
+  if (path.includes('/field-details/')) {
+    return 'Thông tin sân';
+  }
+
+  // Xử lý theo role cụ thể
+  if (role === 'CUSTOMER') {
+    if (path.includes('/booking/new')) return 'Đặt sân mới';
+    if (path.includes('/booking/')) return 'Đặt sân';
+    if (path.includes('/customer/profile')) return 'Tài khoản';
+    if (path.includes('/customer/booking-history')) return 'Lịch sử đặt sân';
+    if (path.includes('/customer/rating')) return 'Đánh giá sân';
+  }
+  
+  if (role === 'OWNER') {
+    if (path.includes('/court-management/sub-fields/')) return 'Quản lý sân con';
+    if (path.includes('/court-management')) return 'Quản lý sân';
+    if (path.includes('/booking-management')) return 'Quản lý đặt sân';
+    if (path.includes('/court-stats')) return 'Thống kê sân';
+    if (path.includes('/schedule')) return 'Quản lý lịch hoạt động';
+    if (path.includes('/reviews')) return 'Theo dõi đánh giá sân';
+  }
+  
+  if (role === 'ADMIN') {
+    if (path.includes('/admin/users')) return 'Quản lý người dùng';
+    if (path.includes('/admin/statistics')) return 'Thống kê hệ thống';
+  }
+
+  return 'Trang chủ'; // Default fallback
 }
 
 export {

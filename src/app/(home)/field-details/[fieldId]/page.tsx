@@ -575,7 +575,14 @@ const FieldDetailsPage = () => {
                 min={format(new Date(), 'yyyy-MM-dd')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                placeholder="dd/mm/yyyy"
+                title={selectedDate ? format(new Date(selectedDate), 'dd/MM/yyyy', { locale: vi }) : "Chọn ngày"}
               />
+              {selectedDate && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Ngày đã chọn: {format(new Date(selectedDate), 'EEEE, dd/MM/yyyy', { locale: vi })}
+                </p>
+              )}
             </div>
 
             <div className="mb-4">
