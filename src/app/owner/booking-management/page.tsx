@@ -975,28 +975,46 @@ const BookingManagementPage: React.FC = () => {
                       <CardContent>
                         <div className="bg-gray-50 p-4 rounded-lg">
                           {(() => {
-                            // Parse description để tách ra thông tin ghi chú
+                            // Parse description để tách ra thông tin
                             const lines = selectedBooking.description.split('\n').filter((line: string) => line.trim());
-                            const noteLineIndex = lines.findIndex((line: string) => line.startsWith('Ghi chú:'));
                             
-                            if (noteLineIndex !== -1) {
-                              const noteLine = lines[noteLineIndex];
-                              const noteContent = noteLine.replace('Ghi chú:', '').trim();
-                              
-                              if (noteContent && noteContent !== 'Không có') {
-                                return (
-                                  <div>
-                                    <p className="text-gray-700 font-medium mb-2">Yêu cầu đặc biệt:</p>
-                                    <p className="text-gray-700 italic">{noteContent}</p>
-                                  </div>
-                                );
-                              }
-                            }
+                            // Tìm các thông tin cần thiết
+                            const bookerLine = lines.find((line: string) => line.startsWith('Người đặt:'));
+                            
+                            const noteLine = lines.find((line: string) => line.startsWith('Ghi chú:'));
+                            
+                            const bookerName = bookerLine ? bookerLine.replace('Người đặt:', '').trim() : '';
+                            
+                            const noteContent = noteLine ? noteLine.replace('Ghi chú:', '').trim() : '';
                             
                             return (
-                              <div>
-                                <p className="text-gray-700 font-medium mb-2">Thông tin đặt sân:</p>
-                                <pre className="text-gray-700 whitespace-pre-wrap text-sm">{selectedBooking.description}</pre>
+                              <div className="space-y-4">
+                                {(bookerName) && (
+                                  <div>
+                                    <p className="text-gray-700 font-medium mb-3 border-b border-gray-200 pb-2">Tên người đặt:</p>
+                                    <div className="space-y-2 ml-4">
+                                      {bookerName && (
+                                        <div className="flex">
+                                          <span className="text-gray-700">{bookerName}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {noteContent && noteContent !== 'Không có' && (
+                                  <div>
+                                    <p className="text-gray-700 font-medium mb-2 border-b border-gray-200 pb-2">Ghi chú đặc biệt:</p>
+                                    <p className="text-gray-700 italic ml-4">{noteContent}</p>
+                                  </div>
+                                )}
+                                
+                                {!bookerName && (!noteContent || noteContent === 'Không có') && (
+                                  <div>
+                                    <p className="text-gray-700 font-medium mb-2">Thông tin đặt sân:</p>
+                                    <pre className="text-gray-700 whitespace-pre-wrap text-sm">{selectedBooking.description}</pre>
+                                  </div>
+                                )}
                               </div>
                             );
                           })()}
