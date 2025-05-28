@@ -77,7 +77,7 @@ const FieldDetailsPage = () => {
     }
   });
 
-  const { data: subfields, isLoading: isLoadingSubfields } = useFindManySubField({
+  const { data: subfields} = useFindManySubField({
     where: {
       fieldId: fieldId
     },
@@ -218,7 +218,7 @@ const FieldDetailsPage = () => {
     const subfield = subfields.find(sf => sf.id === subfieldId);
     if (!subfield) return false;
     
-    return subfield.status === "AVAILABLE" || subfield.status === "RESERVED";
+    return subfield.status !== "CLOSED";
   };
 
   const isTimeRangeAvailable = (startTime: string, endTime: string, subfieldId: string, dateStr: string) => {
@@ -240,7 +240,11 @@ const FieldDetailsPage = () => {
 
     if (!isWithinOpeningHours(rangeStartTime, rangeEndTime, selectedDateTime)) return false;
 
-    return !hasBookingConflict(subfieldId, selectedDateTime, rangeStartTime, rangeEndTime);
+    if (hasBookingConflict(subfieldId, selectedDateTime, rangeStartTime, rangeEndTime)) return false;
+    
+    if (hasMaintenanceConflict(subfieldId, selectedDateTime, rangeStartTime, rangeEndTime)) return false;
+
+    return true;
   };
 
   const isTimeSlotAvailable = (time: string, subfieldId: string, dateStr: string) => {
@@ -259,7 +263,11 @@ const FieldDetailsPage = () => {
 
     if (!isWithinOpeningHours(startTime, endTime, selectedDateTime)) return false;
 
-    return !hasBookingConflict(subfieldId, selectedDateTime, startTime, endTime);
+    if (hasBookingConflict(subfieldId, selectedDateTime, startTime, endTime)) return false;
+    
+    if (hasMaintenanceConflict(subfieldId, selectedDateTime, startTime, endTime)) return false;
+
+    return true;
   };
 
   const isWithinOpeningHours = (startTime: Date, endTime: Date, dateTime: Date) => {
@@ -319,6 +327,26 @@ const FieldDetailsPage = () => {
     });
   };
 
+  const hasMaintenanceConflict = (subfieldId: string, selectedDateTime: Date, startTime: Date, endTime: Date) => {
+    if (!subfields) return false;
+    
+    const subfield = subfields.find(sf => sf.id === subfieldId);
+    if (!subfield || !subfield.maintenanceSchedules || subfield.maintenanceSchedules.length === 0) return false;
+    
+    return subfield.maintenanceSchedules.some(schedule => {
+      const maintenanceDate = new Date(schedule.startDate);
+      if (maintenanceDate.getDate() !== selectedDateTime.getDate() || 
+          maintenanceDate.getMonth() !== selectedDateTime.getMonth() || 
+          maintenanceDate.getFullYear() !== selectedDateTime.getFullYear()) {
+        return false;
+      }
+      
+      const maintenanceStartTime = new Date(schedule.startDate);
+      const maintenanceEndTime = new Date(schedule.endDate);
+      
+      return (maintenanceStartTime < endTime && maintenanceEndTime > startTime);
+    });
+  };
 
   if (isLoadingField) {
     return (
@@ -356,7 +384,6 @@ const FieldDetailsPage = () => {
             <h1 className="text-3xl font-bold mb-2">{field.description}</h1>
             <div className="flex items-center mb-2">
               <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
               </svg>
               <span className="ml-1 font-medium">{averageRating}</span>
               <span className="mx-2">•</span>
@@ -432,9 +459,12 @@ const FieldDetailsPage = () => {
                           </p>
                           {!isSubfieldAvailable(subfield.id) && (
                             <p className="text-sm text-red-500 mt-1">
-                              {subfield.status === "MAINTENANCE" ? "Đang bảo trì" : 
-                               subfield.status === "CLOSED" ? "Đã đóng cửa" : 
-                               "Không khả dụng"}
+                              {subfield.status === "CLOSED" ? "Đã đóng cửa" : "Không khả dụng"}
+                            </p>
+                          )}
+                          {subfield.status === "MAINTENANCE" && (
+                            <p className="text-sm text-orange-500 mt-1">
+                              Đang bảo trì (có thể đặt ngoài thời gian bảo trì)
                             </p>
                           )}
                         </div>

@@ -13,7 +13,6 @@ const CourtSearchModule = () => {
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
   const [priceRange, setPriceRange] = useState("");
-  const [courtType, setCourtType] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [availableSubFields, setAvailableSubFields] = useState<any[]>([]);
 
@@ -22,40 +21,24 @@ const CourtSearchModule = () => {
       subFields: true,
     },
   });
-  console.log('fields:', fields);
+
   const { data: subFields, isLoading: isLoadingSubFields } = useFindManySubField({
     where: {
       status: {
-        notIn: ["MAINTENANCE", "CLOSED"]
+        not: "CLOSED"
       }
     },
     include: {
       field: true,
       bookings: {
-        where: {
-          status: {
-            not: "cancel" // Không lấy các booking đã hủy
+          include: {
+            review: true
           }
-        }
       }
     },
   });
 
-  const { data: bookings, isLoading: isLoadingBookings } = useFindManyBooking({
-    where: {
-      status: {
-        not: "cancel" // Chỉ lấy các booking chưa bị hủy
-      }
-    },
-    include: {
-      subfield: {
-        include: {
-          field: true
-        }
-      }
-    }
-  });
-
+  
   const locations = fields ? [...new Set(fields.map(field => field.location))] : [];
 
   const priceRanges = [
@@ -69,50 +52,24 @@ const CourtSearchModule = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSearching(true);
-
+  
     if (!date || !location) {
       alert("Vui lòng chọn đầy đủ thông tin tìm kiếm");
       setIsSearching(false);
       return;
     }
-
-    const searchDate = new Date(date);
-
-    console.log('Thông tin tìm kiếm:', {
-      location,
-      date,
-      priceRange,
-      courtType,
-      searchDate: searchDate.toISOString()
-    });
-
+  
     if (subFields) {
-      console.log('Dữ liệu sân:', subFields);
-
       const filteredSubFields = subFields.filter(subField => {
-        console.log('Đang kiểm tra sân:', subField.id, subField.subfieldDescription);
-
         if (location) {
           const field = fields?.find(f => f.id === subField.fieldId);
-          console.log('Kiểm tra địa điểm:', {
-            yêuCầu: location,
-            sânChính: field?.location,
-            khớp: field?.location === location
-          });
           if (!field || field.location !== location) {
-            console.log('Loại: Không đúng địa điểm');
             return false;
           }
         }
-
+  
         if (priceRange) {
           const [minPrice, maxPrice] = priceRange.split('-').map(Number);
-          console.log('Kiểm tra giá:', {
-            giáSân: subField.price,
-            khoảngGiá: priceRange,
-            giáThấpNhất: minPrice,
-            giáCaoNhất: maxPrice
-          });
           if (maxPrice) {
             if (subField.price < minPrice || subField.price > maxPrice) {
               console.log('Loại: Không đúng khoảng giá');
@@ -125,16 +82,19 @@ const CourtSearchModule = () => {
             }
           }
         }
-
+  
         return true;
       });
-
-      console.log('Kết quả lọc sân:', filteredSubFields);
-      setAvailableSubFields(filteredSubFields);
+  
+      // Sắp xếp theo giá từ cao đến thấp (cao nhất trước)
+      const sortedSubFields = filteredSubFields.sort((a, b) => b.price - a.price);
+  
+      console.log('Kết quả lọc sân:', sortedSubFields);
+      setAvailableSubFields(sortedSubFields);
     }
-
+  
     setIsSearching(false);
-  };
+  }; 
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 rounded-xl bg-white shadow-lg">
@@ -182,7 +142,7 @@ const CourtSearchModule = () => {
           <Button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
-            disabled={isSearching || isLoadingFields || isLoadingSubFields || isLoadingBookings}
+            disabled={isSearching || isLoadingFields || isLoadingSubFields}
           >
             {isSearching ? "Đang tìm..." : "Tìm sân"}
           </Button>
@@ -211,12 +171,17 @@ const CourtSearchModule = () => {
                     <p className="text-xs text-gray-500">
                       {subField.haveToPayFirst ? "Thanh toán trước" : "Thanh toán sau"}
                     </p>
+                    {subField.status === "MAINTENANCE" && (
+                      <p className="text-xs text-yellow-600">
+                        Đang bảo trì
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-4 flex justify-end">
                   <Link href={`/field-details/${subField.fieldId}?subfieldId=${subField.id}&date=${date}`}>
                     <Button className="bg-blue-600 text-white hover:bg-blue-700">
-                      Xem chi tiết
+                      Đặt sân
                     </Button>
                   </Link>
                 </div>
@@ -346,7 +311,7 @@ const CourtInfoModule = () => {
                 <div className="flex justify-center">
                   <Link href={`/field-details/${field.id}`}>
                     <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                      Xem chi tiết
+                      Đặt sân
                     </Button>
                   </Link>
                 </div>
@@ -624,7 +589,7 @@ const TestimonialsSection = () => {
                     viewBox="0 0 20 20"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    
                   </svg>
                 ))}
               </div>

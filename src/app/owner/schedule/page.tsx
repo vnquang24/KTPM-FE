@@ -56,7 +56,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'react-hot-toast';
 import { Calendar as CalendarIcon, Clock, Settings, Wrench } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const locales = {
   'vi': vi,
@@ -123,10 +122,6 @@ const ScheduleManagementPage: React.FC = () => {
 
   const userId = getUserId();
 
-  useEffect(() => {
-    console.log('userId:', userId);
-  }, [userId]);
-
   const { data: owner, isLoading: isLoadingOwner } = useFindFirstOwner({
     where: {
       account: {
@@ -138,9 +133,7 @@ const ScheduleManagementPage: React.FC = () => {
     }
   });
 
-  useEffect(() => {
-    console.log('owner:', owner);
-  }, [owner]);
+
 
   const { data: fields, isLoading: isLoadingFields } = useFindManyField({
     where: {
@@ -153,10 +146,6 @@ const ScheduleManagementPage: React.FC = () => {
     enabled: !!owner?.id,
   });
 
-  useEffect(() => {
-    console.log('fields:', fields);
-    console.log('ownerId:', owner?.id);
-  }, [fields, owner?.id]);
 
   const { data: openingHoursData, isLoading: isLoadingOpeningHours, refetch: refetchOpeningHours } = useFindManyOpeningHours({
     where: {
@@ -228,13 +217,40 @@ const ScheduleManagementPage: React.FC = () => {
   };
 
   const handleCreateEvent = async () => {
-    if (!newEvent.title || !newEvent.resourceId) {
-      toast.error('Vui lòng điền đầy đủ thông tin');
+    // Validate dữ liệu trước khi tạo sự kiện
+    if (!newEvent.title.trim()) {
+      toast.error('Vui lòng nhập tiêu đề sự kiện');
+      return;
+    }
+
+    if (!newEvent.resourceId) {
+      toast.error('Vui lòng chọn sân');
+      return;
+    }
+
+    if (!newEvent.start || !newEvent.end) {
+      toast.error('Vui lòng chọn thời gian bắt đầu và kết thúc');
+      return;
+    }
+
+    if (isNaN(newEvent.start.getTime()) || isNaN(newEvent.end.getTime())) {
+      toast.error('Thời gian không hợp lệ');
+      return;
+    }
+
+    if (newEvent.start >= newEvent.end) {
+      toast.error('Thời gian bắt đầu phải trước thời gian kết thúc');
+      return;
+    }
+
+    if (newEvent.type === 'maintenance' && (!newEvent.reason || !newEvent.reason.trim())) {
+      toast.error('Vui lòng nhập lý do bảo trì');
       return;
     }
 
     try {
       if (newEvent.type === 'maintenance') {
+        // Tạo lịch bảo trì mới
         await createMaintenanceSchedule.mutateAsync({
           data: {
             startDate: newEvent.start,
@@ -247,12 +263,13 @@ const ScheduleManagementPage: React.FC = () => {
           }
         });
 
+        // Cập nhật trạng thái sân thành MAINTENANCE
         await updateSubField.mutateAsync({
           where: { id: newEvent.resourceId },
           data: { status: 'MAINTENANCE' }
         });
 
-        toast.success('Đã tạo lịch bảo trì và cập nhật trạng thái sân');
+        toast.success('Đã tạo lịch bảo trì và cập nhật trạng thái sân thành bảo trì');
         refetchMaintenanceSchedules();
       }
 
@@ -263,7 +280,8 @@ const ScheduleManagementPage: React.FC = () => {
         end: addHours(new Date(), 1),
         resourceId: null,
         status: 'AVAILABLE',
-        type: 'operating-hours'
+        type: 'operating-hours',
+        reason: ''
       });
     } catch (error) {
       console.error('Error creating event:', error);
@@ -839,8 +857,19 @@ const ScheduleManagementPage: React.FC = () => {
                 <Input
                   id="event-start"
                   type="datetime-local"
-                  value={format(newEvent.start, "yyyy-MM-dd'T'HH:mm")}
-                  onChange={(e) => setNewEvent({ ...newEvent, start: new Date(e.target.value) })}
+                  value={newEvent.start ? format(newEvent.start, "yyyy-MM-dd'T'HH:mm") : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      try {
+                        const newDate = new Date(e.target.value);
+                        if (!isNaN(newDate.getTime())) {
+                          setNewEvent({ ...newEvent, start: newDate });
+                        }
+                      } catch (error) {
+                        console.error('Lỗi khi chuyển đổi ngày bắt đầu:', error);
+                      }
+                    }
+                  }}
                 />
               </div>
               <div className="grid gap-2">
@@ -848,8 +877,19 @@ const ScheduleManagementPage: React.FC = () => {
                 <Input
                   id="event-end"
                   type="datetime-local"
-                  value={format(newEvent.end, "yyyy-MM-dd'T'HH:mm")}
-                  onChange={(e) => setNewEvent({ ...newEvent, end: new Date(e.target.value) })}
+                  value={newEvent.end ? format(newEvent.end, "yyyy-MM-dd'T'HH:mm") : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      try {
+                        const newDate = new Date(e.target.value);
+                        if (!isNaN(newDate.getTime())) {
+                          setNewEvent({ ...newEvent, end: newDate });
+                        }
+                      } catch (error) {
+                        console.error('Lỗi khi chuyển đổi ngày kết thúc:', error);
+                      }
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -880,7 +920,7 @@ const ScheduleManagementPage: React.FC = () => {
                   <SelectContent className="bg-white">
                     {subFields.map((subField, index) => (
                       <SelectItem key={subField.id} value={subField.id}>
-                        Sân con {index + 1}
+                        {subField.subfieldDescription}
                       </SelectItem>
                     ))}
                   </SelectContent>
