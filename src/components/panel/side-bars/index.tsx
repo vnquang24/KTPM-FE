@@ -49,7 +49,7 @@ const SidebarContent: React.FC = () => {
       >
         <PanelsTopLeft size={32} className="text-blue-600 flex-shrink-0" />
         {!isShowSidebar && (
-          <h1 className="text-xl font-bold text-gray-800 truncate">SPORT COURT</h1>
+          <h1 className="text-xl font-bold text-gray-800 truncate">PickleBall Court</h1>
         )}
       </Link>
       

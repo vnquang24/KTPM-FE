@@ -1,12 +1,14 @@
 'use client';
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { authenticate, setAuthenticated, isAuthenticated, setUserData, getUserData } from '@/utils/auth';
-import { useState } from 'react';
+import { authenticate, isAuthenticated, getUserData } from '@/utils/auth';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 
 const loginFormSchema = z.object({
   username: z.string().min(1, {
@@ -23,6 +25,7 @@ const LoginPage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
   useEffect(() => {
     if (isAuthenticated()) {
@@ -105,56 +108,95 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h2 className="text-2xl font-semibold text-center mb-6">Đăng nhập</h2>
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Tên đăng nhập
-            </label>
-            <input
-              type="text"
-              id="username"
-              {...register('username')}
-              className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              placeholder="Nhập tên đăng nhập"
-            />
-            {errors.username && (
-              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Mật khẩu
-            </label>
-            <input
-              type="password"
-              id="password"
-              {...register('password')}
-              className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              placeholder="Nhập mật khẩu"
-            />
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-            )}
-          </div>
-
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="bg-blue-600 p-6 text-center">
+          <h2 className="text-3xl font-bold text-white">PickleBall Court</h2>
+          <p className="mt-2 text-blue-100">Đăng nhập để quản lý sân PickleBall</p>
+        </div>
+        
+        <div className="p-8">
           {loginError && (
-            <p className="text-red-500 text-sm mb-4">{loginError}</p>
+            <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-600">
+              <p>{loginError}</p>
+            </div>
           )}
+          
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="mb-6">
+              <label htmlFor="username" className="mb-2 block text-sm font-medium text-gray-700">
+                Tên đăng nhập
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="username"
+                  {...register('username')}
+                  className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Nhập tên đăng nhập"
+                />
+              </div>
+              {errors.username && (
+                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white p-2 rounded-lg mt-4 focus:outline-none`}
-          >
-            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-        </form>
+            <div className="mb-6">
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
+                Mật khẩu
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  {...register('password')}
+                  className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-10"
+                  placeholder="Nhập mật khẩu"
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+              )}
+            </div>
+
+           
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full rounded-lg p-3 text-center font-medium text-white transition-colors ${
+                isLoading 
+                  ? 'bg-blue-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+              }`}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="mr-2 h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang đăng nhập...
+                </span>
+              ) : (
+                'Đăng nhập'
+              )}
+            </button>
+          </form>
+          
+        </div>
       </div>
     </div>
   );
