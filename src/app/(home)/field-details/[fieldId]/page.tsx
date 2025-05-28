@@ -334,17 +334,27 @@ const FieldDetailsPage = () => {
     if (!subfield || !subfield.maintenanceSchedules || subfield.maintenanceSchedules.length === 0) return false;
     
     return subfield.maintenanceSchedules.some(schedule => {
-      const maintenanceDate = new Date(schedule.startDate);
-      if (maintenanceDate.getDate() !== selectedDateTime.getDate() || 
-          maintenanceDate.getMonth() !== selectedDateTime.getMonth() || 
-          maintenanceDate.getFullYear() !== selectedDateTime.getFullYear()) {
-        return false;
+      const maintenanceStartDate = new Date(schedule.startDate);
+      const maintenanceEndDate = new Date(schedule.endDate);
+      console.log("maintenanceStartDate", maintenanceStartDate);
+      console.log("maintenanceEndDate", maintenanceEndDate);
+      console.log("selectedDateTime", selectedDateTime);
+      if (selectedDateTime >= maintenanceStartDate && selectedDateTime <= maintenanceEndDate) {
+        return true;
       }
+      console.log(selectedDateTime < maintenanceStartDate || selectedDateTime > maintenanceEndDate);
+      // const maintenanceStartHour = maintenanceStartDate.getHours();
+      // const maintenanceStartMinute = maintenanceStartDate.getMinutes();
+      // const maintenanceEndHour = maintenanceEndDate.getHours();
+      // const maintenanceEndMinute = maintenanceEndDate.getMinutes();
       
-      const maintenanceStartTime = new Date(schedule.startDate);
-      const maintenanceEndTime = new Date(schedule.endDate);
+      // const maintenanceStartTime = new Date(selectedDateTime);
+      // maintenanceStartTime.setHours(maintenanceStartHour, maintenanceStartMinute, 0, 0);
       
-      return (maintenanceStartTime < endTime && maintenanceEndTime > startTime);
+      // const maintenanceEndTime = new Date(selectedDateTime);
+      // maintenanceEndTime.setHours(maintenanceEndHour, maintenanceEndMinute, 0, 0);
+      
+      // return (maintenanceStartTime < endTime && maintenanceEndTime > startTime);
     });
   };
 
