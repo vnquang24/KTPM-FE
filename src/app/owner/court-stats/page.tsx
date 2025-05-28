@@ -45,6 +45,8 @@ const CourtStatsPage: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [selectedQuarter, setSelectedQuarter] = useState<string>(`${new Date().getFullYear()}-Q${Math.floor(new Date().getMonth() / 3) + 1}`);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [customStartDate, setCustomStartDate] = useState<string>(format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'));
+  const [customEndDate, setCustomEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
 
   const userId = getUserId();
 
@@ -100,14 +102,14 @@ const CourtStatsPage: React.FC = () => {
       const start = startOfYear(new Date(year, 0, 1));
       const end = endOfYear(new Date(year, 0, 1));
       return [start, end];
-    } else if (selectedDateRange === 'all') {
-      const start = new Date(2000, 0, 1);
-      const end = new Date();
+    } else if (selectedDateRange === 'custom') {
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
       return [start, end];
     }
 
     return [startOfMonth(today), endOfMonth(today)];
-  }, [selectedDateRange, selectedMonth, selectedQuarter, selectedYear]);
+  }, [selectedDateRange, selectedMonth, selectedQuarter, selectedYear, customStartDate, customEndDate]);
 
   const { data: bookings } = useFindManyBooking({
     where: {
@@ -372,8 +374,8 @@ const CourtStatsPage: React.FC = () => {
       return `Quý ${quarterNumber}/${startDate.getFullYear()}`;
     } else if (selectedDateRange === 'year') {
       return `Năm ${startDate.getFullYear()}`;
-    } else if (selectedDateRange === 'all') {
-      return 'Tất cả thời gian';
+    } else if (selectedDateRange === 'custom') {
+      return `${format(startDate, 'dd/MM/yyyy')} - ${format(endDate, 'dd/MM/yyyy')}`;
     }
     return `${format(startDate, 'dd/MM/yyyy')} - ${format(endDate, 'dd/MM/yyyy')}`;
   }, [selectedDateRange, startDate, endDate]);
@@ -412,7 +414,7 @@ const CourtStatsPage: React.FC = () => {
             <CardTitle className="text-lg">Bộ lọc</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`grid gap-4 ${selectedDateRange === 'custom' ? 'grid-cols-1 md:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
               <div>
                 <Label htmlFor="field-filter" className="mb-2 block">Sân</Label>
                 <Select value={selectedField} onValueChange={setSelectedField}>
@@ -440,7 +442,7 @@ const CourtStatsPage: React.FC = () => {
                     <SelectItem value="month">Theo tháng</SelectItem>
                     <SelectItem value="quarter">Theo quý</SelectItem>
                     <SelectItem value="year">Theo năm</SelectItem>
-                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="custom">Tùy chọn</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -461,34 +463,69 @@ const CourtStatsPage: React.FC = () => {
               {selectedDateRange === 'quarter' && (
                 <div>
                   <Label htmlFor="quarter-select" className="mb-2 block">Quý</Label>
-                  <input
-                    type="month"
-                    id="quarter-select"
-                    value={selectedQuarter}
-                    onChange={(e) => setSelectedQuarter(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
+                  <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
+                    <SelectTrigger id="quarter-select">
+                      <SelectValue placeholder="Chọn quý" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {[...Array(3)].map((_, yearOffset) => {
+                        const year = new Date().getFullYear() - yearOffset;
+                        return [1, 2, 3, 4].map(quarter => (
+                          <SelectItem key={`${year}-Q${quarter}`} value={`${year}-Q${quarter}`}>
+                            Quý {quarter}/{year}
+                          </SelectItem>
+                        ));
+                      }).flat()}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
               {selectedDateRange === 'year' && (
                 <div>
                   <Label htmlFor="year-select" className="mb-2 block">Năm</Label>
-                  <input
-                    type="year"
-                    id="year-select"
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
+                  <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger id="year-select">
+                      <SelectValue placeholder="Chọn năm" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {[...Array(5)].map((_, yearOffset) => {
+                        const year = new Date().getFullYear() - yearOffset;
+                        return (
+                          <SelectItem key={year} value={year.toString()}>
+                            Năm {year}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
-              {selectedDateRange === 'all' && (
-                <div>
-                  <Label className="mb-2 block">Khoảng thời gian</Label>
-                  <div className="flex h-10 items-center px-3 text-sm text-gray-500 border border-input bg-background rounded-md">
-                    Tất cả dữ liệu (từ trước đến nay)
+              {selectedDateRange === 'custom' && (
+                <div className="col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="start-date" className="mb-2 block">Từ ngày</Label>
+                      <input
+                        type="date"
+                        id="start-date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end-date" className="mb-2 block">Đến ngày</Label>
+                      <input
+                        type="date"
+                        id="end-date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        min={customStartDate}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

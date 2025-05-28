@@ -27,7 +27,7 @@ const GoogleMap = ({ address }: { address: string }) => {
         loading="lazy"
         allowFullScreen
         referrerPolicy="no-referrer-when-downgrade"
-        src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAFxY9VRqJUFnQqTHwBpjXpjJFTdj9qsfo&q=${encodedAddress}&language=vi`}
+        src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.096743012147!2d105.84117771476269!3d21.028739086016474!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab9bd9861ca1%3A0xe7887f7b72ca17a9!2s${encodedAddress}!5e0!3m2!1svi!2s!4v1580000000000!5m2!1svi!2s`}
       ></iframe>
     </div>
   );
@@ -134,13 +134,13 @@ const FieldDetailsPage = () => {
   };
 
   const timeSlots = [
-    "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+    "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
     "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00","23:00"
   ];
 
   const getOpeningHoursForDate = (dateStr: string) => {
     if (!field || !field.openingHours || field.openingHours.length === 0) {
-      return { openTime: "06:00", closeTime: "22:00", isOpen: true };
+      return { openTime: "05:00", closeTime: "23:00", isOpen: true };
     }
 
     const selectedDate = new Date(dateStr);
@@ -309,10 +309,10 @@ const FieldDetailsPage = () => {
 
   const hasBookingConflict = (subfieldId: string, selectedDateTime: Date, startTime: Date, endTime: Date) => {
     if (!bookings) return false;
-    
+    console.log(bookings);
     return bookings.some(booking => {
       if (booking.subfieldId !== subfieldId) return false;
-      
+
       const bookingDate = new Date(booking.date);
       if (bookingDate.getDate() !== selectedDateTime.getDate() || 
           bookingDate.getMonth() !== selectedDateTime.getMonth() || 
@@ -334,27 +334,9 @@ const FieldDetailsPage = () => {
     if (!subfield || !subfield.maintenanceSchedules || subfield.maintenanceSchedules.length === 0) return false;
     
     return subfield.maintenanceSchedules.some(schedule => {
-      const maintenanceStartDate = new Date(schedule.startDate);
-      const maintenanceEndDate = new Date(schedule.endDate);
-      console.log("maintenanceStartDate", maintenanceStartDate);
-      console.log("maintenanceEndDate", maintenanceEndDate);
-      console.log("selectedDateTime", selectedDateTime);
-      if (selectedDateTime >= maintenanceStartDate && selectedDateTime <= maintenanceEndDate) {
-        return true;
-      }
-      console.log(selectedDateTime < maintenanceStartDate || selectedDateTime > maintenanceEndDate);
-      // const maintenanceStartHour = maintenanceStartDate.getHours();
-      // const maintenanceStartMinute = maintenanceStartDate.getMinutes();
-      // const maintenanceEndHour = maintenanceEndDate.getHours();
-      // const maintenanceEndMinute = maintenanceEndDate.getMinutes();
-      
-      // const maintenanceStartTime = new Date(selectedDateTime);
-      // maintenanceStartTime.setHours(maintenanceStartHour, maintenanceStartMinute, 0, 0);
-      
-      // const maintenanceEndTime = new Date(selectedDateTime);
-      // maintenanceEndTime.setHours(maintenanceEndHour, maintenanceEndMinute, 0, 0);
-      
-      // return (maintenanceStartTime < endTime && maintenanceEndTime > startTime);
+      const maintenanceStartDateTime = new Date(schedule.startDate);
+      const maintenanceEndDateTime = new Date(schedule.endDate);  
+      return (startTime < maintenanceEndDateTime && endTime > maintenanceStartDateTime);
     });
   };
 

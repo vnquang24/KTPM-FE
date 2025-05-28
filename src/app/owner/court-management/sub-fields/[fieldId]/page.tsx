@@ -162,6 +162,8 @@ const SubFieldManagementPage: React.FC = () => {
         return 'bg-orange-100 text-orange-800';
       case 'RESERVED':
         return 'bg-blue-100 text-blue-800';
+      case 'CLOSED':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -252,6 +254,7 @@ const SubFieldManagementPage: React.FC = () => {
                       <SelectItem value="AVAILABLE">Sẵn sàng</SelectItem>
                       <SelectItem value="MAINTENANCE">Bảo trì</SelectItem>
                       <SelectItem value="RESERVED">Đã đặt</SelectItem>
+                      <SelectItem value="CLOSED">Đóng cửa</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -315,7 +318,9 @@ const SubFieldManagementPage: React.FC = () => {
                   <TableCell className="text-center">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(subField.status)}`}>
                       {subField.status === 'AVAILABLE' ? 'Sẵn sàng' : 
-                       subField.status === 'MAINTENANCE' ? 'Bảo trì' : 'Đã đặt'}
+                       subField.status === 'MAINTENANCE' ? 'Bảo trì' : 
+                       subField.status === 'RESERVED' ? 'Đã đặt' :
+                       subField.status === 'CLOSED' ? 'Đóng cửa' : ''}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">{subField.haveToPayFirst ? 'Có' : 'Không'}</TableCell>
@@ -399,6 +404,7 @@ const SubFieldManagementPage: React.FC = () => {
                                     <SelectItem value="AVAILABLE">Sẵn sàng</SelectItem>
                                     <SelectItem value="MAINTENANCE">Bảo trì</SelectItem>
                                     <SelectItem value="RESERVED">Đã đặt</SelectItem>
+                                    <SelectItem value="CLOSED">Đóng cửa</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>

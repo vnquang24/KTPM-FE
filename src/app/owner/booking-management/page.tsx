@@ -476,11 +476,7 @@ const BookingManagementPage: React.FC = () => {
   return (
     <div className="container mx-auto py-4">
       <div className="flex flex-col space-y-5">
-        <div>
-          <p className="text-gray-500 mt-1">
-            Xem và xử lý các đơn đặt sân
-          </p>
-        </div>
+
         
         <Card>
           <CardHeader className="pb-3">
@@ -589,8 +585,12 @@ const BookingManagementPage: React.FC = () => {
           <CardContent className="p-0">
             <Tabs defaultValue="list" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="list">Danh sách</TabsTrigger>
-                <TabsTrigger value="calendar">Lịch</TabsTrigger>
+                <TabsTrigger value="list"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-lg"
+                >Danh sách</TabsTrigger>
+                <TabsTrigger value="calendar"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-lg"
+                >Lịch</TabsTrigger>
               </TabsList>
               
               <TabsContent value="list" className="p-4">

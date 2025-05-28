@@ -158,8 +158,12 @@ export default function ReviewsPage() {
 
       <Tabs defaultValue="statistics" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="statistics">Thống kê</TabsTrigger>
-          <TabsTrigger value="details">Chi tiết đánh giá</TabsTrigger>
+          <TabsTrigger value="statistics"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-lg"
+          >Thống kê</TabsTrigger>
+          <TabsTrigger value="details"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-lg"
+          >Chi tiết đánh giá</TabsTrigger>
         </TabsList>
         
         <TabsContent value="statistics" className="space-y-6">

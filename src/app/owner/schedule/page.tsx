@@ -534,21 +534,15 @@ const ScheduleManagementPage: React.FC = () => {
     setEvents(allEvents);
   }, [selectedField, selectedSubField, subFields, operatingHours, openingHoursData, maintenanceSchedules, bookings]);
   return (
-    <div className="container mx-auto py-4">
+    <div className="container">
       <div className="flex flex-col space-y-5">
-        <div>
-          <p className="text-gray-500 mt-1">
-            Quản lý giờ mở cửa và lịch bảo trì cho các sân
-          </p>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Lịch hoạt động</CardTitle>
                 <CardDescription>
-                  Xem và quản lý lịch hoạt động cho các sân
+                Quản lý giờ mở cửa và lịch bảo trì cho các sân
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -663,8 +657,12 @@ const ScheduleManagementPage: React.FC = () => {
               <CardContent className="p-4">
                 <Tabs defaultValue="operating-hours">
                   <TabsList className="grid grid-cols-2 mb-4">
-                    <TabsTrigger value="operating-hours">Giờ mở cửa</TabsTrigger>
-                    <TabsTrigger value="maintenance">Bảo trì</TabsTrigger>
+                    <TabsTrigger value="operating-hours"
+                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-lg"
+                    >Giờ mở cửa</TabsTrigger>
+                    <TabsTrigger value="maintenance"
+                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-lg"
+                    >Bảo trì</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="operating-hours">
